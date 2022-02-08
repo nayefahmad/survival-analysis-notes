@@ -12,6 +12,13 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Overview 
+
+Reference: [A systematic comparison of recurrent event models for application to composite endpoints](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5755224/)
+
+Specifically, see the Additional File section. 
+
+
 # Libraries 
 ```{r}
 library(survival)
