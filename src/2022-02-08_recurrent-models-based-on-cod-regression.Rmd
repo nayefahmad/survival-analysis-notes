@@ -3,7 +3,7 @@ title: "Recurrent models based on Cox regression"
 author: "Nayef"
 date: "2022-01-06" 
 output: 
-   html_document: 
+   github_document: 
      toc: true
      number_sections: true
 ---
@@ -19,7 +19,8 @@ library(survival)
 
 # Test 
 ```{r}
-x <- 1:10
-x 
+x <- rnorm(100)
+hist(x)
+
 ```
 
