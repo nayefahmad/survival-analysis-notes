@@ -1,0 +1,25 @@
+---
+title: "Recurrent models based on Cox regression"
+author: "Nayef"
+date: "2022-01-06" 
+output: 
+   html_document: 
+     toc: true
+     number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Libraries 
+```{r}
+library(survival)
+```
+
+# Test 
+```{r}
+x <- 1:10
+x 
+```
+
