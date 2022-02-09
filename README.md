@@ -18,3 +18,6 @@ Notes on survival and recurrent event analysis
   script I'm working on, then in the console, call `renv::hydrate`. This seems 
   to correctly install the package in the local env. 
 
+## Contents 
+1. [Generating a smooth estimate of the survival function via the hazard function](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-09_smoothing-the-km-estimate.md)
+2. [Recurrent models based on Cox regression](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-08_recurrent-models-based-on-cod-regression.md)
