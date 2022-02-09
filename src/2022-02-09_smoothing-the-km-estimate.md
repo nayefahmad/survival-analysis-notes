@@ -5,14 +5,22 @@ Nayef
 
 -   [1 Overview](#overview)
 -   [2 Libraries](#libraries)
--   [3 Dataset: Progression-free survival of gastric
-    cancer](#dataset-progression-free-survival-of-gastric-cancer)
--   [4 KM curve](#km-curve)
--   [5 Smoothed hazard functions](#smoothed-hazard-functions)
--   [6 Deriving smoothed survival estimtate from smoothed hazard
-    function](#deriving-smoothed-survival-estimtate-from-smoothed-hazard-function)
--   [7 Plotting KM and smoothed survival
-    estimates](#plotting-km-and-smoothed-survival-estimates)
+-   [3 Example 1](#example-1)
+    -   [3.1 Dataset: Progression-free survival of gastric
+        cancer](#dataset-progression-free-survival-of-gastric-cancer)
+    -   [3.2 KM curve](#km-curve)
+    -   [3.3 Smoothed hazard functions](#smoothed-hazard-functions)
+    -   [3.4 Deriving smoothed survival estimtate from smoothed hazard
+        function](#deriving-smoothed-survival-estimtate-from-smoothed-hazard-function)
+    -   [3.5 Plotting KM and smoothed survival
+        estimates](#plotting-km-and-smoothed-survival-estimates)
+-   [4 Example 2](#example-2)
+    -   [4.1 KM curve](#km-curve-1)
+    -   [4.2 Smoothed hazard functions](#smoothed-hazard-functions-1)
+    -   [4.3 Deriving smoothed survival estimtate from smoothed hazard
+        function](#deriving-smoothed-survival-estimtate-from-smoothed-hazard-function-1)
+    -   [4.4 Plotting KM and smoothed survival
+        estimates](#plotting-km-and-smoothed-survival-estimates-1)
 
 # 1 Overview
 
@@ -59,7 +67,9 @@ library(muhaz)
 
     ## Warning: package 'muhaz' was built under R version 4.0.5
 
-# 3 Dataset: Progression-free survival of gastric cancer
+# 3 Example 1
+
+## 3.1 Dataset: Progression-free survival of gastric cancer
 
 ``` r
 # ?gastricXelox
@@ -77,7 +87,7 @@ str(gastricXelox)
 stopifnot(nrow(gastricXelox) == 48)
 ```
 
-# 4 KM curve
+## 3.2 KM curve
 
 ``` r
 km1 <- survfit(Surv(time_months, delta) ~ 1, conf.type = "log-log")
@@ -100,7 +110,7 @@ ggsurvplot(km1, data = gastricXelox)
 # plot(km1, conf.int = T, mark = "|", xlab = "time_months", ylab = "surv prob")
 ```
 
-# 5 Smoothed hazard functions
+## 3.3 Smoothed hazard functions
 
 -   Uses `muhaz::pehaz` to estimate piecewise exponential hazard
     function from right-censored data.
@@ -146,7 +156,7 @@ title("Estimated hazard functions using piecewise exponential estimation \nand k
 
 ![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-# 6 Deriving smoothed survival estimtate from smoothed hazard function
+## 3.4 Deriving smoothed survival estimtate from smoothed hazard function
 
 ``` r
 hazard_values <- hazard_smooth_auto$haz.est
@@ -156,7 +166,7 @@ n_haz <- length(hazard_values)
 smooth_surv <- exp(-cumsum(hazard_values[1:n_haz - 1] * diff(times)))
 ```
 
-# 7 Plotting KM and smoothed survival estimates
+## 3.5 Plotting KM and smoothed survival estimates
 
 ``` r
 plot(km1, conf.int = F, mark = "|", 
@@ -167,3 +177,101 @@ title("Survival estimates - KM curve and smoothed curve")
 ```
 
 ![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+# 4 Example 2
+
+``` r
+df <- tibble::tribble(
+   ~time, ~event,
+   810.8,     0L,
+   199.7,     1L,
+   504.4,     0L,
+  400.39,     1L,
+   742.9,     0L,
+     976,     0L,
+   960.7,     0L,
+   204.5,     1L,
+   597.1,     0L,
+   599.6,     1L,
+     493,     0L,
+   883.5,     0L,
+   261.7,     1L,
+   568.3,     0L,
+   877.5,     0L,
+   358.6,     0L,
+     819,     0L,
+   508.3,     1L,
+   287.1,     0L,
+   391.2,     1L,
+   611.7,     0L,
+     709,     0L
+  )
+
+str(df)
+```
+
+    ## tibble [22 x 2] (S3: tbl_df/tbl/data.frame)
+    ##  $ time : num [1:22] 811 200 504 400 743 ...
+    ##  $ event: int [1:22] 0 1 0 1 0 0 0 1 0 1 ...
+
+``` r
+stopifnot(nrow(df) == 22)
+```
+
+## 4.1 KM curve
+
+``` r
+km2 <- survfit(Surv(df$time, df$event) ~ 1, conf.type = "log-log")
+
+km2
+```
+
+    ## Call: survfit(formula = Surv(df$time, df$event) ~ 1, conf.type = "log-log")
+    ## 
+    ##       n events median 0.95LCL 0.95UCL
+    ## [1,] 22      7     NA     508      NA
+
+``` r
+ggsurvplot(km2, data = df)
+```
+
+![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+# plot(km1, conf.int = T, mark = "|", xlab = "time_months", ylab = "surv prob")
+```
+
+## 4.2 Smoothed hazard functions
+
+``` r
+hazard_smooth_auto2 <- muhaz(df$time, df$event,
+                            bw.method = "local")
+
+
+
+plot(hazard_smooth_auto2, col = "blue", lwd = 2)
+title("Estimated hazard function using kernel-based method")
+```
+
+![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+## 4.3 Deriving smoothed survival estimtate from smoothed hazard function
+
+``` r
+hazard_values2 <- hazard_smooth_auto2$haz.est
+times2 <- hazard_smooth_auto2$est.grid
+n_haz2 <- length(hazard_values2)
+
+smooth_surv2 <- exp(-cumsum(hazard_values2[1:n_haz - 1] * diff(times2)))
+```
+
+## 4.4 Plotting KM and smoothed survival estimates
+
+``` r
+plot(km2, conf.int = F, mark = "|", 
+     xlab = "time_months", ylab = "surv prob")
+lines(smooth_surv2 ~ times2[1:(length(times2) - 1)], col = "blue", lwd =2)
+title("Survival estimates - KM curve and smoothed curve")
+```
+
+![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
