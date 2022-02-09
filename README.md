@@ -1,4 +1,4 @@
-# Survival nalysis notes
+# Survival analysis notes
 
 Notes on survival and recurrent event analysis, from several different references. 
 
