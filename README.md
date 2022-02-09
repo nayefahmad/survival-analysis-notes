@@ -1,5 +1,5 @@
-# survival-analysis-notes
-Notes on survival and recurrent event analysis 
+Survival nalysis notes
+Notes on survival and recurrent event analysis, from several different references. 
 
 ## Repo structure 
 
