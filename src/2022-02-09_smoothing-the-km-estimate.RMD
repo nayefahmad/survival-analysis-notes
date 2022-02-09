@@ -16,6 +16,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Reference: DF Moore, *"Applied Survival Analysis Using R"*, p32. 
 
+Use case: when making predictions based on small samples, the step-function nature of the KM curve means that we often assign zero probability to the occurrence of an event. This is not reasonable in many cases. A smoothed survival estimate will avoid this issue. 
+
+We use the following relationship to get the survival function from the hazard function: 
+
+$S(t) = e^{(-H(t))} = e^{(\int_{0}^{t}h(x)dx)}$
 
 # Libraries 
 ```{r}

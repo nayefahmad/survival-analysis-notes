@@ -26,6 +26,16 @@ Nayef
 
 Reference: DF Moore, *“Applied Survival Analysis Using R”*, p32.
 
+Use case: when making predictions based on small samples, the
+step-function nature of the KM curve means that we often assign zero
+probability to the occurrence of an event. This is not reasonable in
+many cases. A smoothed survival estimate will avoid this issue.
+
+We use the following relationship to get the survival function from the
+hazard function:
+
+*S*(*t*) = *e*<sup>( − *H*(*t*))</sup> = *e*<sup>(∫<sub>0</sub><sup>*t*</sup>*h*(*x*)*d**x*)</sup>
+
 # 2 Libraries
 
 ``` r
