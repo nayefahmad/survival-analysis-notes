@@ -1,0 +1,94 @@
+---
+title: "Smoothing the KM estimate"
+author: "Nayef"
+date: "2022-01-06" 
+output: 
+   github_document: 
+     toc: true
+     number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview 
+
+Reference: DF Moore, *"Applied Survival Analysis Using R"*, p32. 
+
+
+# Libraries 
+```{r}
+library(survival)
+library(asaur)
+library(survminer)
+library(muhaz)
+```
+
+# Dataset: Progression-free survival of gastric cancer
+```{r}
+# ?gastricXelox
+time_months <- gastricXelox$timeWeeks * 7/30.25
+delta <- gastricXelox$delta  # 1 for death, 0 for censored 
+
+str(gastricXelox)
+stopifnot(nrow(gastricXelox) == 48)
+```
+
+# KM curve 
+```{r}
+km1 <- survfit(Surv(time_months, delta) ~ 1, conf.type = "log-log")
+
+km1
+
+ggsurvplot(km1, data = gastricXelox)
+# plot(km1, conf.int = T, mark = "|", xlab = "time_months", ylab = "surv prob")
+
+```
+
+# Smoothed hazard functions
+- Uses `muhaz::pehaz` to estimate piecewise exponential hazard function from 
+right-censored data. 
+- `width = 5` means we split the time axis and "bin" into intervals of length 5 
+months. 
+```{r}
+# ?pehaz
+# ?muhaz
+hazard_1_month_bin <- pehaz(time_months, delta, width = 1)
+hazard_5_month_bin <- pehaz(time_months, delta, width = 5)
+hazard_smooth <- muhaz(time_months, delta, 
+                       bw.smooth = 20, 
+                       b.cor = "left")
+hazard_smooth_auto <- muhaz(time_months, delta,
+                            bw.method = "local")
+
+
+
+plot(hazard_1_month_bin)
+lines(hazard_5_month_bin, col = "tomato")
+lines(hazard_smooth, col = "deepskyblue3", lwd = 2)
+lines(hazard_smooth_auto, col = "blue", lwd = 2)
+
+title("Estimated hazard functions using piecewise exponential estimation \nand kernel-based methods")
+
+```
+
+# Deriving smoothed survival estimtate from smoothed hazard function 
+```{r}
+hazard_values <- hazard_smooth_auto$haz.est
+times <- hazard_smooth_auto$est.grid
+n_haz <- length(hazard_values)
+
+smooth_surv <- exp(-cumsum(hazard_values[1:n_haz - 1] * diff(times)))
+
+```
+
+# Plotting KM and smoothed survival estimates 
+```{r}
+plot(km1, conf.int = F, mark = "|", 
+     xlab = "time_months", ylab = "surv prob", 
+     xlim = c(0, 30))
+lines(smooth_surv ~ times[1:(length(times) - 1)], col = "blue", lwd =2)
+title("Survival estimates - KM curve and smoothed curve")
+```
+
