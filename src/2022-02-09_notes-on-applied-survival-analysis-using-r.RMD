@@ -1,0 +1,36 @@
+---
+title: "Notes on Applied Survival Analysis Using R"
+author: "Nayef"
+date: "2/9/2022"
+output: 
+   github_document: 
+     toc: true
+     number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview 
+
+Reference: DF Moore, *"Applied Survival Analysis Using R"*. 
+
+
+
+# Libraries 
+```{r}
+library(survival)
+library(asaur)
+library(survminer)
+library(muhaz)
+```
+
+# Chapter 1 
+
+## Hazards for US males and females 
+```{r}
+# ?survexp.us
+str(survexp.us)
+```
+
