@@ -26,3 +26,4 @@ Unfortunately, this doesn't run the file and create outputs, so I do that manual
 ## Contents 
 1. [Generating a smooth estimate of the survival function via the hazard function](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-09_smoothing-the-km-estimate.md)
 2. [Recurrent models based on Cox regression](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-08_recurrent-models-based-on-cod-regression.md)
+3. [Using the lifelines library in python to fit KM curves](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-10_km-curve-lifelines.ipynb)
