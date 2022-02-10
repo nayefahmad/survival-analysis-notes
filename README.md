@@ -15,9 +15,13 @@ Notes on survival and recurrent event analysis, from several different reference
 - `renv` directory: files created by `renv` R package to replicate environment. Helpful 
   reference: 
   - [Introduction to renv](https://rstudio.github.io/renv/articles/renv.html)
-  - Note: my current workflow is to include a `library(<package>)` call in the 
-  script I'm working on, then in the console, call `renv::hydrate`. This seems 
-  to correctly install the package in the local env. 
+    
+### Notes 
+- my current workflow is to include a `library(<package>)` call in the
+script I'm working on, then in the console, call `renv::hydrate`. This seems 
+to correctly install the package in the local env. 
+- I use `p2j` to convert from .py files to .ipynb files ([reference](https://pypi.org/project/p2j/)). 
+Unfortunately, this doesn't run the file and create outputs, so I do that manually. 
 
 ## Contents 
 1. [Generating a smooth estimate of the survival function via the hazard function](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-09_smoothing-the-km-estimate.md)

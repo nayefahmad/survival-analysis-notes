@@ -1,7 +1,8 @@
-"""
+# # Using lifelines to fit KM curves
 
+# References:
+#   - https://lifelines.readthedocs.io/en/latest/fitters/univariate/KaplanMeierFitter.html  # noqa
 
-"""
 
 from lifelines import KaplanMeierFitter
 from lifelines.datasets import load_waltons
