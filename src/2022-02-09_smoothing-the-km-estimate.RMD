@@ -80,7 +80,7 @@ title("Estimated hazard functions using piecewise exponential estimation \nand k
 
 ```
 
-## Deriving smoothed survival estimtate from smoothed hazard function 
+## Deriving smoothed survival estimate from smoothed hazard function
 ```{r}
 hazard_values <- hazard_smooth_auto$haz.est
 times <- hazard_smooth_auto$est.grid
