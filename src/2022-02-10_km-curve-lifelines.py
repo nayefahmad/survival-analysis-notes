@@ -4,7 +4,7 @@
 #   - https://lifelines.readthedocs.io/en/latest/fitters/univariate/KaplanMeierFitter.html  # noqa
 
 
-from lifelines import KaplanMeierFitter
+from lifelines import KaplanMeierFitter, NelsonAalenFitter
 from lifelines.datasets import load_waltons
 import matplotlib.pyplot as plt
 
@@ -22,7 +22,7 @@ kmf.fit(waltons["time"], waltons["event"])
 kmf.plot_survival_function()
 plt.show()
 
-# ## Smoothing the KM curve by using smoothed hazard function
+# ## Smoothing the survival curve by using smoothed hazard function
 
 # Reference: [github link](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-09_smoothing-the-km-estimate.md) # noqa
 
@@ -130,7 +130,27 @@ delta = [
     0,
 ]
 
+# KM curve:
+
 km2 = KaplanMeierFitter(label="gastricXelox data")
 km2.fit(time_months, delta)
 km2.plot_survival_function()
 plt.show()
+
+
+# ## Nelson-Aalen-based cumulative hazard function and smoothed hazard fn:
+
+na1 = NelsonAalenFitter()
+na1.fit(time_months, delta)
+na1.plot_cumulative_hazard()
+plt.show()
+
+bandwidth = 3
+na1.plot_hazard(bandwidth=bandwidth)
+plt.show()
+
+# Recover the data using the `smoothed_hazard_()` method
+
+df_smoothed_hazard = na1.smoothed_hazard_(bandwidth=bandwidth)
+df_smoothed_hazard.head()
+df_smoothed_hazard.tail()
