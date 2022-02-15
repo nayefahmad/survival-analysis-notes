@@ -141,7 +141,6 @@ km2 <- survfit(Surv(df$time, df$event) ~ 1, conf.type = "log-log")
 km2
 
 ggsurvplot(km2, data = df)
-# plot(km1, conf.int = T, mark = "|", xlab = "time_months", ylab = "surv prob")
 
 ```
 
@@ -173,6 +172,80 @@ smooth_surv2 <- exp(-cumsum(hazard_values2[1:n_haz - 1] * diff(times2)))
 plot(km2, conf.int = F, mark = "|", 
      xlab = "time_months", ylab = "surv prob")
 lines(smooth_surv2 ~ times2[1:(length(times2) - 1)], col = "blue", lwd =2)
+title("Survival estimates - KM curve and smoothed curve")
+```
+
+
+
+
+# Example 3
+```{r}
+df2 <- tibble::tribble(
+       ~time, ~event,
+       810.8,     0L,
+       704.1,     0L,
+       59.16,     1L,
+     1084.13,     0L,
+         976,     0L,
+       960.7,     0L,
+       801.6,     0L,
+      1092.6,     0L,
+       883.5,     0L,
+         830,     0L,
+       877.5,     0L,
+       358.6,     0L,
+       639.3,     1L,
+       179.7,     0L,
+       407.7,     1L,
+       387.7,     0L,
+      1002.9,     0L,
+         709,     0L
+     )
+
+
+str(df2)
+stopifnot(nrow(df2) == 18)
+
+```
+
+## KM curve 
+```{r}
+km3 <- survfit(Surv(df2$time, df2$event) ~ 1, conf.type = "log-log")
+
+km3
+
+ggsurvplot(km3, data = df2)
+
+```
+
+
+## Smoothed hazard functions
+```{r}
+hazard_smooth_auto3 <- muhaz(df2$time, df2$event,
+                            bw.method = "local")
+
+
+
+plot(hazard_smooth_auto3, col = "blue", lwd = 2)
+title("Estimated hazard function using kernel-based method")
+
+```
+
+## Deriving smoothed survival estimtate from smoothed hazard function 
+```{r}
+hazard_values3 <- hazard_smooth_auto3$haz.est
+times3 <- hazard_smooth_auto3$est.grid
+n_haz3 <- length(hazard_values3)
+
+smooth_surv3 <- exp(-cumsum(hazard_values3[1:n_haz - 1] * diff(times3)))
+
+```
+
+## Plotting KM and smoothed survival estimates 
+```{r}
+plot(km3, conf.int = F, mark = "|", 
+     xlab = "time_months", ylab = "surv prob")
+lines(smooth_surv3 ~ times3[1:(length(times3) - 1)], col = "blue", lwd =2)
 title("Survival estimates - KM curve and smoothed curve")
 ```
 
