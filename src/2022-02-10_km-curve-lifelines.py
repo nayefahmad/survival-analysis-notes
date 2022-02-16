@@ -7,6 +7,7 @@
 from lifelines import KaplanMeierFitter, NelsonAalenFitter
 from lifelines.datasets import load_waltons
 import matplotlib.pyplot as plt
+import numpy as np
 
 from IPython.core.interactiveshell import InteractiveShell  # noqa
 
@@ -151,6 +152,23 @@ plt.show()
 
 # Recover the data using the `smoothed_hazard_()` method
 
-df_smoothed_hazard = na1.smoothed_hazard_(bandwidth=bandwidth)
+df_smoothed_hazard = (
+    na1.smoothed_hazard_(bandwidth=bandwidth)
+    .reset_index()
+    .rename(
+        columns={"index": "time", "differenced-NA_estimate": "hazard_estimate"}
+    )  # noqa
+)
 df_smoothed_hazard.head()
 df_smoothed_hazard.tail()
+
+n_haz = len(df_smoothed_hazard)
+times_diff = df_smoothed_hazard["time"].diff()
+times_diff = times_diff[1:].reset_index(drop=True)
+
+hazards = df_smoothed_hazard["hazard_estimate"][0:-1]
+assert len(hazards) == len(times_diff)
+
+surv_smoothed = np.exp(-np.cumsum(hazards * times_diff))
+# surv_smoothed.plot()
+# plt.show()
