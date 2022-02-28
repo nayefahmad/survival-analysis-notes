@@ -9,6 +9,8 @@ from lifelines.datasets import load_waltons
 import matplotlib.pyplot as plt
 import numpy as np
 
+# import pandas as pd
+
 from IPython.core.interactiveshell import InteractiveShell  # noqa
 
 InteractiveShell.ast_node_interactivity = "all"
@@ -135,13 +137,15 @@ delta = [
 
 km2 = KaplanMeierFitter(label="gastricXelox data")
 km2.fit(time_months, delta)
-km2.plot_survival_function()
-plt.show()
+fig, ax = plt.subplots()
+km2.plot_survival_function(ax=ax)
+ax.set_title("KM estimate of survival function")
+fig.show()
 
 
 # ## Nelson-Aalen-based cumulative hazard function and smoothed hazard fn:
 
-na1 = NelsonAalenFitter(label="gastricXelox data")
+na1 = NelsonAalenFitter()
 na1.fit(time_months, delta)
 fig, ax = plt.subplots()
 na1.plot_cumulative_hazard(ax=ax)
@@ -174,5 +178,18 @@ hazards = df_smoothed_hazard["hazard_estimate"][0:-1]
 assert len(hazards) == len(times_diff)
 
 surv_smoothed = np.exp(-np.cumsum(hazards * times_diff))
-# surv_smoothed.plot()
-# plt.show()
+# todo: fix x-values for plotting
+
+# todo: show km estimate on same graph
+# df_surv_smoothed = pd.DataFrame({'time': time_months,
+#                                  'surv_from_smoothed_hazard': surv_smoothed})
+
+fig, ax = plt.subplots()
+surv_smoothed.plot(ax=ax)
+ax.set_ylim((0, 1))
+ax.set_title(
+    f"Estimated survival curve based on smoothed estimate of hazard function \nBandwidth={bandwidth}"  # noqa
+)
+fig.show()
+
+km2.survival_function_
