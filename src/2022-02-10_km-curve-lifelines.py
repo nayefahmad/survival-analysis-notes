@@ -141,16 +141,20 @@ plt.show()
 
 # ## Nelson-Aalen-based cumulative hazard function and smoothed hazard fn:
 
-na1 = NelsonAalenFitter()
+na1 = NelsonAalenFitter(label="gastricXelox data")
 na1.fit(time_months, delta)
-na1.plot_cumulative_hazard()
-plt.show()
+fig, ax = plt.subplots()
+na1.plot_cumulative_hazard(ax=ax)
+ax.set_title("Estimated cumulative hazard function")
+fig.show()
 
 bandwidth = 3
-na1.plot_hazard(bandwidth=bandwidth)
-plt.show()
+fig, ax = plt.subplots()
+na1.plot_hazard(bandwidth=bandwidth, ax=ax)
+ax.set_title("Estimated hazard function")
+fig.show()
 
-# Recover the data using the `smoothed_hazard_()` method
+# Recover the data underlying the plot using the `smoothed_hazard_()` method
 
 df_smoothed_hazard = (
     na1.smoothed_hazard_(bandwidth=bandwidth)
