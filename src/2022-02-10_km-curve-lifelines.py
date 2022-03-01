@@ -12,8 +12,7 @@ from lifelines import KaplanMeierFitter, NelsonAalenFitter
 from lifelines.datasets import load_waltons
 import matplotlib.pyplot as plt
 import numpy as np
-
-# import pandas as pd
+import pandas as pd
 
 from IPython.core.interactiveshell import InteractiveShell  # noqa
 
@@ -177,25 +176,38 @@ df_smoothed_hazard.head()
 df_smoothed_hazard.tail()
 
 n_haz = len(df_smoothed_hazard)
-times_diff = df_smoothed_hazard["time"].diff()
-times_diff = times_diff[1:].reset_index(drop=True)
+n_km_estimate = len(km2.survival_function_)
+assert n_haz == n_km_estimate
+
+times_diff_with_initial_na = df_smoothed_hazard["time"].diff()
+times_diff = times_diff_with_initial_na[1:].reset_index(drop=True)
 
 hazards = df_smoothed_hazard["hazard_estimate"][0:-1]
 assert len(hazards) == len(times_diff)
 
 surv_smoothed = np.exp(-np.cumsum(hazards * times_diff))
-# todo: fix x-values for plotting
 
-# todo: show km estimate on same graph
-# df_surv_smoothed = pd.DataFrame({'time': time_months,
-#                                  'surv_from_smoothed_hazard': surv_smoothed})
+df_surv_smoothed = pd.DataFrame(
+    {
+        "time": np.cumsum(times_diff),
+        "surv_smoothed": surv_smoothed,
+    }
+)
 
 fig, ax = plt.subplots()
-surv_smoothed.plot(ax=ax)
+ax.plot(
+    df_surv_smoothed["time"],
+    df_surv_smoothed["surv_smoothed"],
+    label="smoothed survival curve",
+)
+ax.plot(
+    km2.survival_function_.reset_index()["timeline"],
+    km2.survival_function_.reset_index()["gastricXelox data"],
+    label="km estimate",
+)
 ax.set_ylim((0, 1))
 ax.set_title(
     f"Estimated survival curve based on smoothed estimate of hazard function \nBandwidth={bandwidth}"  # noqa
 )
+ax.legend()
 fig.show()
-
-km2.survival_function_
