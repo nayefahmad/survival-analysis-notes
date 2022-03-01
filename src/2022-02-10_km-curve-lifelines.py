@@ -1,4 +1,8 @@
-# # Using lifelines to fit KM curves
+# # Using lifelines to fit survival curves
+
+# This example uses KM curves, and Nelson-Aalen curves. It shows how we can
+# use a smoothed estimate of the hazard function to get a smoothed survival
+# function - similar to [this example in R](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-09_smoothing-the-km-estimate.md)  # noqa
 
 # References:
 #   - https://lifelines.readthedocs.io/en/latest/fitters/univariate/KaplanMeierFitter.html  # noqa
@@ -22,8 +26,10 @@ waltons.describe(include="all").T
 
 kmf = KaplanMeierFitter(label="waltons_data")
 kmf.fit(waltons["time"], waltons["event"])
-kmf.plot_survival_function()
-plt.show()
+fig, ax = plt.subplots()
+kmf.plot_survival_function(ax=ax)
+ax.set_title("KM curve - Waltons data")
+fig.show()
 
 # ## Smoothing the survival curve by using smoothed hazard function
 
