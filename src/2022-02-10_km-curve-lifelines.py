@@ -214,4 +214,76 @@ ax.set_title(
 ax.legend()
 fig.show()
 
-# Trying several different bandwidths in a loop:
+# ### Trying several different bandwidths in a loop:
+
+
+def surv_smoothed(times: pd.Series, hazards: pd.Series) -> pd.DataFrame:
+    times_diff = diff_and_drop_initial_na(times)
+    hazards = hazards[0:-1]
+    surv_smoothed = surv_from_hazard(hazards, times_diff)
+    df_surv_smoothed = pd.DataFrame(
+        {
+            "time": np.cumsum(times_diff),
+            "surv_smoothed": surv_smoothed,
+        }
+    )
+    return df_surv_smoothed
+
+
+def surv_from_hazard(hazards, times_diff):
+    return np.exp(-np.cumsum(hazards * times_diff))
+
+
+def test_surv_from_hazard():
+    # todo: finish this
+    pass
+
+
+def diff_and_drop_initial_na(times: pd.Series):
+    t_diff = times.diff()
+    t_diff = t_diff[1:].reset_index(drop=True)
+    return t_diff
+
+
+def test_drop_na_after_diff():
+    times = pd.Series([i for i in range(1, 11)])
+    t_diff = diff_and_drop_initial_na(times)
+    assert len(t_diff) == len(times) - 1
+    assert all(t_diff.notnull())
+
+
+fig = plt.figure(figsize=(20, 15))
+for n, bandwidth in enumerate([0.1, 1, 2, 3, 5, 10]):
+    df_smoothed_hazard = (
+        na1.smoothed_hazard_(bandwidth=bandwidth)
+        .reset_index()
+        .rename(
+            columns={
+                "index": "time",
+                "differenced-NA_estimate": "hazard_estimate",
+            }  # noqa
+        )  # noqa
+    )
+
+    df_surv_smoothed = surv_smoothed(
+        df_smoothed_hazard["time"], df_smoothed_hazard["hazard_estimate"]
+    )
+
+    ax = plt.subplot(3, 2, n + 1)
+    ax.plot(
+        df_surv_smoothed["time"],
+        df_surv_smoothed["surv_smoothed"],
+        label="smoothed survival curve",
+    )
+    ax.plot(
+        km2.survival_function_.reset_index()["timeline"],
+        km2.survival_function_.reset_index()["gastricXelox data"],
+        label="km estimate",
+    )
+    ax.set_ylim((0, 1))
+    ax.set_title(
+        f"Estimated survival curve based on smoothed estimate of hazard function \nBandwidth={bandwidth}"  # noqa
+    )
+    ax.legend()
+fig.tight_layout()
+fig.show()
