@@ -194,6 +194,8 @@ df_surv_smoothed = pd.DataFrame(
     }
 )
 
+df_surv_smoothed
+
 fig, ax = plt.subplots()
 ax.plot(
     df_surv_smoothed["time"],
@@ -211,3 +213,5 @@ ax.set_title(
 )
 ax.legend()
 fig.show()
+
+# Trying several different bandwidths in a loop:
