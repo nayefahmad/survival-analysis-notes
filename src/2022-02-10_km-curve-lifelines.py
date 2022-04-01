@@ -24,11 +24,22 @@ waltons.columns = ["time", "event", "group"]
 waltons.describe(include="all").T
 
 kmf = KaplanMeierFitter(label="waltons_data")
+
 kmf.fit(waltons["time"], waltons["event"])
 fig, ax = plt.subplots()
 kmf.plot_survival_function(ax=ax)
 ax.set_title("KM curve - Waltons data")
 fig.show()
+
+# Here is the estimated survival function as a dataframe:
+
+kmf.survival_function_.head()
+
+# Here's how predictions work:
+
+times_to_predict = [2, 4, 6, 7, 8, 10]
+kmf.predict(times_to_predict)
+
 
 # ## Smoothing the survival curve by using smoothed hazard function
 
