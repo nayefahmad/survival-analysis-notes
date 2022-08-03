@@ -1,0 +1,57 @@
+---
+title: "Confidence intervals for conditional survival estimates"
+author: "Nayef"
+date: "8/3/2022"
+output: 
+   github_document: 
+     toc: true
+     number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Overview 
+
+
+
+## References 
+1. `condsurv` R package [docs](https://www.emilyzabor.com/condsurv/)
+2. `condsurv` R package [github page](https://github.com/zabore/condsurv)
+
+
+# Libraries 
+```{r}
+# library("remotes")
+# install_github("zabore/condsurv")
+
+library("condsurv")
+library(dplyr)
+library(survival)
+
+```
+
+
+# Example 
+
+```{r}
+lung2 <- 
+  mutate(
+    lung,
+    os_yrs = time / 365.25
+  )
+
+
+myfit <- survfit(Surv(os_yrs, status) ~ 1, data = lung2)
+
+# ?conditional_surv_est
+conditional_surv_est(
+  basekm = myfit,
+  t1 = 0.5, 
+  t2 = 1
+)
+
+
+```
+
