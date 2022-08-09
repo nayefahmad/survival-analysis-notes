@@ -10,11 +10,26 @@ Nayef
 
 # 1 Overview
 
+The [Kaplan-Meier
+curve](https://en.wikipedia.org/wiki/Kaplan%E2%80%93Meier_estimator)
+gives unconditional survival probability estimates, *Ŝ*(*t*). In many
+cases, we are interested in how survival probabilities change as a
+single person/unit progresses over time - these are *conditional*
+survival probabilities, *Ŝ*(*t*<sub>2</sub>\|*t*<sub>1</sub>), or the
+probability of surviving beyond *t*<sub>2</sub>, *given that they have
+already survived up to* *t*<sub>1</sub>. These conditional survival
+estimates can be directly estimated from the KM curve without much
+difficulty. However, generating confidence intervals around these
+estimates is a bit more involved. Here, I use the `{condsurv}` R package
+to demonstrate how this works.
+
 ## 1.1 References
 
 1.  `condsurv` R package [docs](https://www.emilyzabor.com/condsurv/)
 2.  `condsurv` R package [github
     page](https://github.com/zabore/condsurv)
+3.  
+4.  
 
 # 2 Libraries
 
