@@ -17,6 +17,10 @@ from IPython.core.interactiveshell import InteractiveShell
 
 InteractiveShell.ast_node_interactivity = "all"
 
+# # Functions
+
+# ## Nonparametric approach
+
 
 def generate_weibull_km_nonparametric(shape_param):
     # Generate uncensored Weibull rvs:
@@ -122,7 +126,7 @@ save_dir = Path(
 )
 rewrite_outputs = False
 
-shape_param = 0.75  # todo: for simplicity, assume scale is always 1
+shape_param = 1.75  # todo: for simplicity, assume scale is always 1
 
 ticks = np.linspace(
     weibull_min.ppf(0.01, shape_param), weibull_min.ppf(0.99, shape_param), 100
@@ -138,6 +142,7 @@ fig.show()
     km_values_unconditional_nonparametric,
     kmf,
 ) = generate_weibull_km_nonparametric(shape_param)
+
 median_surv_time_unconditional_nonparametric = get_median_survival_time(
     x_values01, km_values_unconditional_nonparametric
 )
@@ -153,21 +158,25 @@ survived_up_to_quantile = 0.80  # todo: arbitrary value
     ),
     survived_up_to_quantile=survived_up_to_quantile,
 )
+
 median_surv_time_conditional_nonparametric = get_median_survival_time(
     x_values02, km_values_conditional_nonparametric
 )
+
 survived_up_to_round = round(survived_up_to, 3)
 
 # ## Parametric approach
 x_values, km_values = generate_weibull_km(shape_param)
+
 median_surv_time_unconditional_parametric = get_median_survival_time(
     x_values, km_values
 )
 
-# for comparability, use the same value of s that we got for the nonparametric case
+# For comparability, use the same value of s that we got for the nonparametric case
 x_values, km_values_conditional = generate_conditional_weibull_km(
     shape_param, survived_up_to
 )
+
 median_surv_time_conditional_parametric = get_median_survival_time(
     x_values, km_values_conditional
 )
