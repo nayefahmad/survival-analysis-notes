@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import weibull_min
 from lifelines import KaplanMeierFitter
+from pathlib import Path
 
 from IPython.core.interactiveshell import InteractiveShell
 
@@ -18,7 +19,7 @@ InteractiveShell.ast_node_interactivity = "all"
 
 # ## Parameters:
 
-c = 1.5  # todo: for simplicity, assume scale is always 1
+c = 0.9  # todo: for simplicity, assume scale is always 1
 
 ticks = np.linspace(weibull_min.ppf(0.01, c), weibull_min.ppf(0.99, c), 100)
 fig, ax = plt.subplots()
@@ -112,12 +113,11 @@ def get_median_survival_time(x_values: np.array, km_values: np.array):
 
 
 def main():
-    # first set up non-parametric data
-    # then set up parametric data
-    # then show plots in this order:
-    #   - ax3
-    #   - ax1
-    #   - ax2
+    """
+    - first set up non-parametric case data
+    - then set up parametric case data
+    - then show result plots for each case
+    """
 
     # Nonparametric approach
     (
@@ -129,7 +129,7 @@ def main():
         x_values01, km_values_unconditional_nonparametric
     )
 
-    s_quantile = 0.80  # arbitrary value
+    s_quantile = 0.80  # todo: arbitrary value
     (
         x_values02,
         km_values_conditional_nonparametric,
@@ -151,6 +151,7 @@ def main():
         x_values, km_values
     )
 
+    # for comparability, use the same value of s that we got for the nonparametric case
     x_values, km_values_conditional = generate_conditional_weibull_km(c, s)
     median_surv_time_conditional_parametric = get_median_survival_time(
         x_values, km_values_conditional
@@ -164,6 +165,8 @@ def main():
         "Comparing parametric Weibull survival function with KM estimate", loc="left"
     )
     ax3.legend()
+    if rewrite_outputs:
+        plt.savefig(save_dir.joinpath("01_parametric-vs-non-parametric.jpg"))
     fig.show()
 
     # Plot non-parametric condition and unconditional survival curves
@@ -201,6 +204,8 @@ def main():
     ax1.set_ylabel("Survival probability")
     ax1.set_xlim((0, 3.5))  # todo: adjust if necessary
     fig.tight_layout(pad=2)
+    if rewrite_outputs:
+        plt.savefig(save_dir.joinpath("02_non-parametric.jpg"))
     fig.show()
 
     # Plot parametric condition and unconditional survival curves
@@ -235,8 +240,32 @@ def main():
     ax2.set_xlabel("Time from start")
     ax2.set_ylabel("Survival probability")
     fig.tight_layout(pad=2)
+    if rewrite_outputs:
+        plt.savefig(save_dir.joinpath("03_parametric.jpg"))
+    fig.show()
+
+    # Plotting several parametric conditional survival functions:
+    results = {}
+    for s in np.arange(0.1, 1.5, 0.1):
+        x_values_temp, km_values_temp = generate_conditional_weibull_km(c, s)
+        results[s] = (x_values_temp, km_values_temp)
+
+    fig, ax = plt.subplots()
+    for key, value in results.items():
+        ax.plot(value[0], value[1], label=f"s = {round(key, 2)}")
+    ax.set_title(
+        f"Parametric conditional survival functions  \nWeibull shape = {c}", loc="left"
+    )
+    ax.legend(bbox_to_anchor=(1, 1.04))
+    fig.tight_layout(pad=2)
+    if rewrite_outputs:
+        plt.savefig(save_dir.joinpath("04_multiple-parametric.jpg"))
     fig.show()
 
 
 if __name__ == "__main__":
+    save_dir = Path(
+        r"\\nos\data\MP_ITAR_Programs\C-17\06_personal-folders\NA\2022-09-20_c17_conditional-survival-based-median-survival-time\dst"  # noqa
+    )  # noqa
+    rewrite_outputs = False
     main()
