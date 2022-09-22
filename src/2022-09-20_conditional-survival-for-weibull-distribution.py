@@ -8,6 +8,7 @@
 
 import pandas as pd
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 from scipy.stats import weibull_min
 from lifelines import KaplanMeierFitter
@@ -122,7 +123,8 @@ def get_median_survival_time(x_values: np.array, km_values: np.array):
 # - then show result plots for each case
 
 save_dir = Path(
-    r"\\nos\data\MP_ITAR_Programs\C-17\06_personal-folders\NA\2022-09-20_c17_conditional-survival-based-median-survival-time\dst"  # noqa
+    r"\\nos\data\MP_ITAR_Programs\C-17\06_personal-folders\NA\2022-09-20_c17_"
+    + r"conditional-survival-based-median-survival-time\dst"
 )
 rewrite_outputs = False
 
@@ -201,10 +203,13 @@ ax1.plot(
     km_values_conditional_nonparametric,
     label=f"CS(t|s={survived_up_to_round})",
 )
-ax1.set_title(
-    "Unconditional and conditional Weibull survival functions  \n\n- S(t) represents unconditional survival probability at time t  \n- CS(t|s) represents conditional survival over the next t time-units, \n    given that you have already survived up to s",  # noqa
-    loc="left",
-)
+font = matplotlib.font_manager.FontProperties(family="Roboto", weight="regular", size=9)
+text = r"$\bf{Unconditional \ and \ conditional \ Weibull \ survival \ functions}$"
+text += "\n\n"
+text += "- S(t) represents unconditional survival probability at time t  \n"
+text += "- CS(t|s) represents conditional survival over the next t time-units, \n"
+text += "    given that you have already survived up to s"
+ax1.set_title(text, loc="left", fontproperties=font)
 ax1.axvline(x=survived_up_to, lw=1, ls="dotted", color="grey")
 ax1.axhline(y=0.50, lw=1, ls="dotted", color="grey")
 ax1.annotate(
@@ -241,10 +246,14 @@ ax2.plot(
     km_values_conditional,
     label=f"Parametric CS(t|s={survived_up_to_round})",
 )
-ax2.set_title(
-    "Parametric conditional and unconditional Weibull survival functions  \n\n- S(t) represents unconditional survival probability at time t  \n- CS(t|s) represents conditional survival over the next t time-units, \n    given that you have already survived up to s",  # noqa
-    loc="left",
-)
+font = matplotlib.font_manager.FontProperties(family="Roboto", weight="regular", size=9)
+text = r"$\bf{Parametric \ conditional \ and \ unconditional \ Weibull \ survival \ }$"
+text += r"$\bf{functions}$"
+text += "\n\n"
+text += "- S(t) represents unconditional survival probability at time t  \n"
+text += "- CS(t|s) represents conditional survival over the next t time-units, \n"
+text += "    given that you have already survived up to s"
+ax2.set_title(text, loc="left", fontproperties=font)
 ax2.axvline(x=survived_up_to, lw=1, ls="dotted", color="grey")
 ax2.axhline(y=0.50, lw=1, ls="dotted", color="grey")
 ax2.annotate(
