@@ -1,9 +1,14 @@
 # # Conditional survival curves for Weibull distributions
 
-#
+# Standard survival curves are most useful when the unit of investigation has just
+# started being tracked. They don't give the right survival estimates when we already
+# know that the unit of investigation has *already* survived up to a certain point.
+# For that we need conditional survival curves. This file shows how to derive
+# conditional survival curves based on the Weibull distribution, using both
+# parametric and non-parametric approaches.
 
 # References:
-# []()
+# [Conditional Survival: A Useful Concept to Provide Information on How Prognosis Evolves over Time](https://aacrjournals.org/clincancerres/article/21/7/1530/248476/Conditional-Survival-A-Useful-Concept-to-Provide)  # noqa
 
 
 import pandas as pd
