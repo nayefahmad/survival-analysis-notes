@@ -3,6 +3,14 @@
 # This example uses KM curves, and Nelson-Aalen curves. It shows how we can
 # use a smoothed estimate of the hazard function to get a smoothed survival
 # function - similar to [this example in R](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-09_smoothing-the-km-estimate.md)  # noqa
+# where we use automated kernel-based methods to get a smoothed hazard curve and then
+# convert it to a smoothed survival function.
+
+# Using lifelines, we get the smoothed hazard function via the `smoothed_hazard_()`
+# method of the `NelsonAalenFitter` class. This uses a kernel-based method that takes
+# a bandwidth as an input. Unfortunately there is no way to automatically set the
+# bandwidth (unlike in the R example).
+
 
 # References:
 #   - https://lifelines.readthedocs.io/en/latest/fitters/univariate/KaplanMeierFitter.html  # noqa
