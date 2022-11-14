@@ -18,7 +18,12 @@ Reference: DF Moore, *"Applied Survival Analysis Using R"*, p32.
 
 Use case: when making predictions based on small samples, the step-function nature of the KM curve means that we often assign zero probability to the occurrence of an event. This is not reasonable in many cases. A smoothed survival estimate will avoid this issue. 
 
-We use the following relationship to get the survival function from the hazard function: 
+The best way to smooth the survival curve seems to be via the hazard function. That is, we first get a smoothed hazard function, then convert that to a survival function. Here, we explore two ways to get a smoothed hazard function from data: 
+
+1. Using manual binning and getting a piecewise-exponential hazard function. Implemented by the `muhaz::pehaz` function. 
+2. Using manual/automatic bandwidth selection and kernel-based methods. Implemented by the `muhaz::muhaz` function. 
+
+We use the following relationship to get the survival function back from the hazard function: 
 
 $S(t) = e^{(-H(t))} = e^{(\int_{0}^{t}h(x)dx)}$
 

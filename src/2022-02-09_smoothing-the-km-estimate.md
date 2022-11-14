@@ -10,17 +10,24 @@ Nayef
         cancer](#dataset-progression-free-survival-of-gastric-cancer)
     -   [3.2 KM curve](#km-curve)
     -   [3.3 Smoothed hazard functions](#smoothed-hazard-functions)
-    -   [3.4 Deriving smoothed survival estimtate from smoothed hazard
-        function](#deriving-smoothed-survival-estimtate-from-smoothed-hazard-function)
+    -   [3.4 Deriving smoothed survival estimate from smoothed hazard
+        function](#deriving-smoothed-survival-estimate-from-smoothed-hazard-function)
     -   [3.5 Plotting KM and smoothed survival
         estimates](#plotting-km-and-smoothed-survival-estimates)
 -   [4 Example 2](#example-2)
     -   [4.1 KM curve](#km-curve-1)
     -   [4.2 Smoothed hazard functions](#smoothed-hazard-functions-1)
     -   [4.3 Deriving smoothed survival estimtate from smoothed hazard
-        function](#deriving-smoothed-survival-estimtate-from-smoothed-hazard-function-1)
+        function](#deriving-smoothed-survival-estimtate-from-smoothed-hazard-function)
     -   [4.4 Plotting KM and smoothed survival
         estimates](#plotting-km-and-smoothed-survival-estimates-1)
+-   [5 Example 3](#example-3)
+    -   [5.1 KM curve](#km-curve-2)
+    -   [5.2 Smoothed hazard functions](#smoothed-hazard-functions-2)
+    -   [5.3 Deriving smoothed survival estimtate from smoothed hazard
+        function](#deriving-smoothed-survival-estimtate-from-smoothed-hazard-function-1)
+    -   [5.4 Plotting KM and smoothed survival
+        estimates](#plotting-km-and-smoothed-survival-estimates-2)
 
 # 1 Overview
 
@@ -31,8 +38,18 @@ step-function nature of the KM curve means that we often assign zero
 probability to the occurrence of an event. This is not reasonable in
 many cases. A smoothed survival estimate will avoid this issue.
 
-We use the following relationship to get the survival function from the
-hazard function:
+The best way to smooth the survival curve seems to be via the hazard
+function. That is, we first get a smoothed hazard function, then convert
+that to a survival function. Here, we explore two ways to get a smoothed
+hazard function from data:
+
+1.  Using manual binning and getting a piecewise-exponential hazard
+    function. Implemented by the `muhaz::pehaz` function.
+2.  Using manual/automatic bandwidth selection and kernel-based methods.
+    Implemented by the `muhaz::muhaz` function.
+
+We use the following relationship to get the survival function back from
+the hazard function:
 
 *S*(*t*) = *e*<sup>( − *H*(*t*))</sup> = *e*<sup>(∫<sub>0</sub><sup>*t*</sup>*h*(*x*)*d**x*)</sup>
 
@@ -166,7 +183,7 @@ title("Estimated hazard functions using piecewise exponential estimation \nand k
 
 ![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-## 3.4 Deriving smoothed survival estimtate from smoothed hazard function
+## 3.4 Deriving smoothed survival estimate from smoothed hazard function
 
 ``` r
 hazard_values <- hazard_smooth_auto$haz.est
@@ -247,10 +264,6 @@ ggsurvplot(km2, data = df)
 
 ![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
-``` r
-# plot(km1, conf.int = T, mark = "|", xlab = "time_months", ylab = "surv prob")
-```
-
 ## 4.2 Smoothed hazard functions
 
 ``` r
@@ -285,3 +298,94 @@ title("Survival estimates - KM curve and smoothed curve")
 ```
 
 ![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+# 5 Example 3
+
+``` r
+df2 <- tibble::tribble(
+       ~time, ~event,
+       810.8,     0L,
+       704.1,     0L,
+       59.16,     1L,
+     1084.13,     0L,
+         976,     0L,
+       960.7,     0L,
+       801.6,     0L,
+      1092.6,     0L,
+       883.5,     0L,
+         830,     0L,
+       877.5,     0L,
+       358.6,     0L,
+       639.3,     1L,
+       179.7,     0L,
+       407.7,     1L,
+       387.7,     0L,
+      1002.9,     0L,
+         709,     0L
+     )
+
+
+str(df2)
+```
+
+    ## tibble [18 x 2] (S3: tbl_df/tbl/data.frame)
+    ##  $ time : num [1:18] 810.8 704.1 59.2 1084.1 976 ...
+    ##  $ event: int [1:18] 0 0 1 0 0 0 0 0 0 0 ...
+
+``` r
+stopifnot(nrow(df2) == 18)
+```
+
+## 5.1 KM curve
+
+``` r
+km3 <- survfit(Surv(df2$time, df2$event) ~ 1, conf.type = "log-log")
+
+km3
+```
+
+    ## Call: survfit(formula = Surv(df2$time, df2$event) ~ 1, conf.type = "log-log")
+    ## 
+    ##       n events median 0.95LCL 0.95UCL
+    ## [1,] 18      3     NA      NA      NA
+
+``` r
+ggsurvplot(km3, data = df2)
+```
+
+![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+## 5.2 Smoothed hazard functions
+
+``` r
+hazard_smooth_auto3 <- muhaz(df2$time, df2$event,
+                            bw.method = "local")
+
+
+
+plot(hazard_smooth_auto3, col = "blue", lwd = 2)
+title("Estimated hazard function using kernel-based method")
+```
+
+![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+## 5.3 Deriving smoothed survival estimtate from smoothed hazard function
+
+``` r
+hazard_values3 <- hazard_smooth_auto3$haz.est
+times3 <- hazard_smooth_auto3$est.grid
+n_haz3 <- length(hazard_values3)
+
+smooth_surv3 <- exp(-cumsum(hazard_values3[1:n_haz - 1] * diff(times3)))
+```
+
+## 5.4 Plotting KM and smoothed survival estimates
+
+``` r
+plot(km3, conf.int = F, mark = "|", 
+     xlab = "time_months", ylab = "surv prob")
+lines(smooth_surv3 ~ times3[1:(length(times3) - 1)], col = "blue", lwd =2)
+title("Survival estimates - KM curve and smoothed curve")
+```
+
+![](2022-02-09_smoothing-the-km-estimate_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
