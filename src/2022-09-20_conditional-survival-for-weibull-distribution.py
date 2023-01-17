@@ -10,6 +10,10 @@
 # References:
 # [Conditional Survival: A Useful Concept to Provide Information on How Prognosis Evolves over Time](https://aacrjournals.org/clincancerres/article/21/7/1530/248476/Conditional-Survival-A-Useful-Concept-to-Provide)  # noqa
 
+# ### Todo:
+
+# 1. Add type hints for function inputs and outputs
+
 
 import pandas as pd
 import numpy as np
@@ -39,7 +43,7 @@ def generate_weibull_km_nonparametric(shape_param):
     return df_km.index.values, df_km["KM_estimate"], kmf
 
 
-def generate_weibull_km_conditional_nonparametric(
+def generate_conditional_weibull_km_nonparametric(
     unconditional_km: pd.DataFrame, survived_up_to_quantile: float
 ):
     df_km = unconditional_km
@@ -67,15 +71,15 @@ def generate_weibull_km_conditional_nonparametric(
 
 
 # ## Parametric approach
-def generate_weibull_km(shape_param):
+def generate_weibull_survival_fn(shape_param):
     x_values = set_up_data(shape_param)
-    km_values = weibull_km(x_values, shape_param)
+    km_values = weibull_survival_fn(x_values, shape_param)
     return x_values, km_values
 
 
-def generate_conditional_weibull_km(shape_param, survived_up_to):
+def generate_conditional_weibull_survival_fn(shape_param, survived_up_to):
     x_values = set_up_data(shape_param)
-    km_values = weibull_km_conditional(x_values, shape_param, survived_up_to)
+    km_values = weibull_survival_fn_conditional(x_values, shape_param, survived_up_to)
     return x_values, km_values
 
 
@@ -86,12 +90,12 @@ def set_up_data(shape_param):
     return x_values
 
 
-def weibull_km(x_values: np.array, shape_param: float) -> np.array:
-    km_values = np.exp(-1 * (x_values**shape_param))
-    return km_values
+def weibull_survival_fn(x_values: np.array, shape_param: float) -> np.array:
+    surv_fn__values = np.exp(-1 * (x_values**shape_param))
+    return surv_fn__values
 
 
-def weibull_km_conditional(
+def weibull_survival_fn_conditional(
     x_values: np.array, shape_param: float, survived_up_to: float
 ) -> np.array:
     """
@@ -102,20 +106,23 @@ def weibull_km_conditional(
       to this time
     :return:
     """
-    km_value_at_s = np.exp(-1 * (survived_up_to**shape_param))
-    all_km_values_unclipped = np.exp(-1 * (x_values**shape_param)) / km_value_at_s
+    survival_fn_value_at_s = np.exp(-1 * (survived_up_to**shape_param))
+    all_km_values_unclipped = (
+        np.exp(-1 * (x_values**shape_param)) / survival_fn_value_at_s
+    )
     all_km_values = np.where(all_km_values_unclipped <= 1, all_km_values_unclipped, 1)
     return all_km_values
 
 
-def get_median_survival_time(x_values: np.array, km_values: np.array):
+def get_median_survival_time(x_values: np.array, surv_values: np.array):
     """
     Picks the last time before the 51st percentile of survival times
     :param x_values:
-    :param km_values:
+    :param surv_values: either KM estimator values, or parametric survival function
+      values
     :return:
     """
-    df = pd.DataFrame({"KM_estimate": km_values}, index=x_values)
+    df = pd.DataFrame({"KM_estimate": surv_values}, index=x_values)
     df.index.name = "timeline"
     median_surv = (df["KM_estimate"][df["KM_estimate"] > 0.50]).index.values[-1]
     return median_surv
@@ -159,7 +166,7 @@ survived_up_to_quantile = 0.80  # todo: arbitrary value
     x_values02,
     km_values_conditional_nonparametric,
     survived_up_to,
-) = generate_weibull_km_conditional_nonparametric(
+) = generate_conditional_weibull_km_nonparametric(
     pd.DataFrame(
         {"KM_estimate": km_values_unconditional_nonparametric}, index=x_values01
     ),
@@ -173,14 +180,14 @@ median_surv_time_conditional_nonparametric = get_median_survival_time(
 survived_up_to_round = round(survived_up_to, 3)
 
 # ## Parametric approach
-x_values, km_values = generate_weibull_km(shape_param)
+x_values, km_values = generate_weibull_survival_fn(shape_param)
 
 median_surv_time_unconditional_parametric = get_median_survival_time(
     x_values, km_values
 )
 
 # For comparability, use the same value of s that we got for the nonparametric case
-x_values, km_values_conditional = generate_conditional_weibull_km(
+x_values, km_values_conditional = generate_conditional_weibull_survival_fn(
     shape_param, survived_up_to
 )
 
@@ -189,12 +196,11 @@ median_surv_time_conditional_parametric = get_median_survival_time(
 )
 
 # ## Plot comparison of parametric vs non-parametric
+text = "Comparing parametric Weibull survival function with KM estimate"
 fig, ax3 = plt.subplots()
 ax3.plot(x_values, km_values, label="Parametric Weibull survival function")
 kmf.plot_survival_function(ax=ax3)
-ax3.set_title(
-    "Comparing parametric Weibull survival function with KM estimate", loc="left"
-)
+ax3.set_title(text, loc="left")
 ax3.legend()
 if rewrite_outputs:
     plt.savefig(save_dir.joinpath("01_parametric-vs-non-parametric.jpg"))
@@ -290,20 +296,18 @@ fig.show()
 # ## Plotting several parametric conditional survival functions:
 results = {}
 for survived_up_to in np.arange(0.1, 1.5, 0.1):
-    x_values_temp, km_values_temp = generate_conditional_weibull_km(
+    x_values_temp, km_values_temp = generate_conditional_weibull_survival_fn(
         shape_param, survived_up_to
     )
     results[survived_up_to] = (x_values_temp, km_values_temp)
 
 
 # plots:
+text = f"Parametric conditional survival functions  \nWeibull shape = {shape_param}"
 fig, ax = plt.subplots()
 for key, value in results.items():
     ax.plot(value[0], value[1], label=f"s = {round(key, 2)}")
-ax.set_title(
-    f"Parametric conditional survival functions  \nWeibull shape = {shape_param}",
-    loc="left",
-)
+ax.set_title(text, loc="left")
 ax.legend(bbox_to_anchor=(1, 1.04))
 fig.tight_layout(pad=2)
 if rewrite_outputs:
