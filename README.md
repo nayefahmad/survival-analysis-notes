@@ -4,7 +4,7 @@ Notes on survival and recurrent event analysis, from several different reference
 
 ## Contents 
 1. [Generating a smooth estimate of the survival function via the hazard function](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-09_smoothing-the-km-estimate.md)
-2. [Recurrent models based on Cox regression](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-08_recurrent-models-based-on-cod-regression.md)
+2. [Recurrent models based on Cox regression (WIP)](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-08_recurrent-models-based-on-cod-regression.md)
 3. [Using the lifelines library in python to fit KM curves](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-10_km-curve-lifelines.ipynb)
 4. [Notes and examples from book "Applied Survival Analysis Using R", by D.F. Moore](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-02-09_notes-on-applied-survival-analysis-using-r.md)
 5. [Confidence intervals for conditional survival estimates](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-08-03_confidence-intervals-for-conditional-survival.md)
