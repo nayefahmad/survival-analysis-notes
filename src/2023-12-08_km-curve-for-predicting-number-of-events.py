@@ -56,7 +56,6 @@ def generate_conditional_event_table():
 # Main analysis:
 df_tbe = pd.DataFrame(
     {
-        "id": [1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8],
         "value": [10, 5, 10, 20, 1, 10, 3, 8, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1],
         "is_uncensored": [1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
     }
@@ -87,3 +86,16 @@ for time in pred_times:
         time, kmf.event_table, df_tbe
     )
     print(f"time: {time}, pred={pred}")
+
+
+# Trying with CoxPH model to show that it's equivalent to KM when no covariates
+# todo: seems like in lifelines you can't fit a CoxPH without covariates
+cph = lifelines.CoxPHFitter().fit(
+    df_tbe, duration_col="value", event_col="is_uncensored"
+)
+cph.print_summary()
+prediction_time = 10
+predicted_cumulative_hazard = cph.predict_cumulative_hazard(
+    pd.DataFrame(), times=prediction_time
+)
+print(predicted_cumulative_hazard.values[0][0])
