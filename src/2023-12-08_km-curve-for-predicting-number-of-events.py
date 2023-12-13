@@ -90,6 +90,8 @@ for time in pred_times:
 
 # Trying with CoxPH model to show that it's equivalent to KM when no covariates
 # todo: seems like in lifelines you can't fit a CoxPH without covariates
+# notes:
+# - see CASL book for explanation of why coxph equivalent to KM when no covariates
 cph = lifelines.CoxPHFitter().fit(
     df_tbe, duration_col="value", event_col="is_uncensored"
 )
@@ -99,3 +101,7 @@ predicted_cumulative_hazard = cph.predict_cumulative_hazard(
     pd.DataFrame(), times=prediction_time
 )
 print(predicted_cumulative_hazard.values[0][0])
+
+
+# todo: try coxph with 1 predictor - `tbe_sequence_number`. This let's us analyze
+#  whether there is a "recurrence" problem
