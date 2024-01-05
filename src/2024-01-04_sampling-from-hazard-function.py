@@ -6,20 +6,23 @@ Reference: https://gist.github.com/jcrudy/10481743
 """
 
 import numpy
+import numpy as np
 import scipy.integrate
-from matplotlib import pyplot
+from matplotlib import pyplot as plt
 from statsmodels.distributions import ECDF
 
 
-class HazardSampler(object):
+class HazardSampler:
     def __init__(self, hazard, start=0.0, step=None):
         self.hazard = hazard
         if step is None:
             h0 = hazard(0.0)
             if h0 > 0:
+                # todo: explain this
                 step = 2.0 / hazard(0.0)
             else:
                 # Reasonable default.  Not efficient in some cases.
+                # todo: explain this
                 step = 200.0 / scipy.integrate.quad(hazard, 0.0, 100.0)
         self.cumulative_hazard = CumulativeHazard(hazard)
         self.survival_function = SurvivalFunction(self.cumulative_hazard)
@@ -31,7 +34,7 @@ class HazardSampler(object):
         return self.sampler.draw()
 
 
-class InversionTransformSampler(object):
+class InversionTransformSampler:
     def __init__(self, inverse_cdf):
         self.inverse_cdf = inverse_cdf
 
@@ -40,7 +43,7 @@ class InversionTransformSampler(object):
         return self.inverse_cdf(u)
 
 
-class CumulativeHazard(object):
+class CumulativeHazard:
     def __init__(self, hazard):
         self.hazard = hazard
 
@@ -48,7 +51,7 @@ class CumulativeHazard(object):
         return scipy.integrate.quad(self.hazard, 0.0, t)[0]
 
 
-class SurvivalFunction(object):
+class SurvivalFunction:
     def __init__(self, cumulative_hazard):
         self.cumulative_hazard = cumulative_hazard
 
@@ -56,7 +59,7 @@ class SurvivalFunction(object):
         return numpy.exp(-self.cumulative_hazard(t))
 
 
-class Cdf(object):
+class Cdf:
     def __init__(self, survival_function):
         self.survival_function = survival_function
 
@@ -64,7 +67,7 @@ class Cdf(object):
         return 1.0 - self.survival_function(t)
 
 
-class InverseCdf(object):
+class InverseCdf:
     def __init__(
         self, cdf, start, step, precision=1e-8, lower=float("-inf"), upper=float("inf")
     ):
@@ -106,6 +109,14 @@ if __name__ == "__main__":
     def hazard(t):
         return numpy.exp(numpy.sin(t) - 2.0)
 
+    txt = "Hazard function that we will sample from"
+    x = np.linspace(0, 50, 1000)
+    y = hazard(x)
+    plt.plot(x, y)
+    plt.ylabel("hazard")
+    plt.title(txt)
+    plt.show()
+
     # Sample failure times from the hazard function
     sampler = HazardSampler(hazard)
     failure_times = numpy.array([sampler.draw() for _ in range(m)])
@@ -117,30 +128,27 @@ if __name__ == "__main__":
 
     # Make some plots of the simulated data
     # Plot a histogram of failure times from this hazard function
-    pyplot.hist(failure_times, bins=50)
-    pyplot.title("Uncensored Failure Times")
-    pyplot.savefig("uncensored_hist.png")
-    pyplot.show()
+    plt.hist(failure_times, bins=50)
+    plt.title("Uncensored Failure Times")
+    plt.show()
 
     # Plot a histogram of censored failure times from this hazard function
-    pyplot.hist(y, bins=50)
-    pyplot.title("Non-informatively Right Censored Failure Times")
-    pyplot.savefig("censored_hist.png")
-    pyplot.show()
+    plt.hist(y, bins=50)
+    plt.title("Non-informatively Right Censored Failure Times")
+    plt.show()
 
     # Plot the empirical survival function (based on the censored sample) against the
     # actual survival function
     t = numpy.arange(0, 20.0, 0.1)
     S = numpy.array([sampler.survival_function(t[i]) for i in range(len(t))])
     S_hat = 1.0 - ECDF(failure_times)(t)
-    pyplot.figure()
-    pyplot.title("Survival Function Comparison")
-    pyplot.plot(t, S, "r", lw=3, label="True survival function")
-    pyplot.plot(t, S_hat, "b--", lw=3, label="Sampled survival function (1 - ECDF)")
-    pyplot.legend()
-    pyplot.xlabel("Time")
-    pyplot.ylabel("Proportion Still Alive")
-    pyplot.savefig("survival_comp.png")
-    pyplot.show()
+    plt.figure()
+    plt.title("Survival Function Comparison")
+    plt.plot(t, S, "r", lw=3, label="True survival function")
+    plt.plot(t, S_hat, "b--", lw=3, label="Sampled survival function (1 - ECDF)")
+    plt.legend()
+    plt.xlabel("Time")
+    plt.ylabel("Proportion Still Alive")
+    plt.show()
 
     print("done")
