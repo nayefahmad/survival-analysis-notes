@@ -78,26 +78,36 @@ class InverseCdf:
         self.lower = lower
         self.upper = upper
 
-    def __call__(self, p):
+    def __call__(self, target_p):
+        """
+        Takes a proportion p (y-axis value of the cdf) and returns the corresponding
+        x value from the cdf (to within a certain precision level).
+        """
         last_diff = None
         step = self.step
-        current = self.start
+        current_x = self.start
         while True:
-            value = self.cdf(current)
-            diff = value - p
+            current_cdf_value = self.cdf(current_x)
+            diff = current_cdf_value - target_p
             if abs(diff) < self.precision:
                 break
             elif diff < 0:
-                current = min(current + step, self.upper)
+                # current_x is too far to the left, so we increase it
+                current_x = min(current_x + step, self.upper)
                 if last_diff is not None and last_diff > 0:
+                    # if diff and last_diff are opposite signs, take smaller
+                    # optimization steps
                     step *= 0.5
                 last_diff = diff
             else:
-                current = max(current - step, self.lower)
+                # current_x is too far to the right, so we decrease it
+                current_x = max(current_x - step, self.lower)
                 if last_diff is not None and last_diff < 0:
+                    # if diff and last_diff are opposite signs, take smaller
+                    # optimization steps
                     step *= 0.5
                 last_diff = diff
-        return current
+        return current_x
 
 
 if __name__ == "__main__":
