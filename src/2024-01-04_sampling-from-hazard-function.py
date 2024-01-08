@@ -5,7 +5,6 @@ Reference: https://gist.github.com/jcrudy/10481743
 
 """
 
-import numpy
 import numpy as np
 import scipy.integrate
 from matplotlib import pyplot as plt
@@ -16,13 +15,14 @@ class HazardSampler:
     def __init__(self, hazard, start=0.0, step=None):
         self.hazard = hazard
         if step is None:
+            # heuristic for setting step size to be used in numerical inverse CDF
+            # implementation
+            # todo: are there better heuristics?
             h0 = hazard(0.0)
             if h0 > 0:
-                # todo: explain this
                 step = 2.0 / hazard(0.0)
             else:
-                # Reasonable default.  Not efficient in some cases.
-                # todo: explain this
+                # Reasonable default. Not efficient in some cases.
                 step = 200.0 / scipy.integrate.quad(hazard, 0.0, 100.0)
         self.cumulative_hazard = CumulativeHazard(hazard)
         self.survival_function = SurvivalFunction(self.cumulative_hazard)
@@ -39,7 +39,7 @@ class InversionTransformSampler:
         self.inverse_cdf = inverse_cdf
 
     def draw(self):
-        u = numpy.random.uniform(0, 1)
+        u = np.random.uniform(0, 1)
         return self.inverse_cdf(u)
 
 
@@ -56,7 +56,7 @@ class SurvivalFunction:
         self.cumulative_hazard = cumulative_hazard
 
     def __call__(self, t):
-        return numpy.exp(-self.cumulative_hazard(t))
+        return np.exp(-self.cumulative_hazard(t))
 
 
 class Cdf:
@@ -112,53 +112,61 @@ class InverseCdf:
 
 if __name__ == "__main__":
     # Set a random seed and sample size
-    numpy.random.seed(1)
+    np.random.seed(1)
     m = 1000
 
     # Use this totally crazy hazard function
-    def hazard(t):
-        return numpy.exp(numpy.sin(t) - 2.0)
+    def hazard_sine(t):
+        return np.exp(np.sin(t) - 2.0)
 
-    txt = "Hazard function that we will sample from"
-    x = np.linspace(0, 50, 1000)
-    y = hazard(x)
-    plt.plot(x, y)
-    plt.ylabel("hazard")
-    plt.title(txt)
-    plt.show()
+    def hazard_piecewise(t):
+        return np.where(t < 5, 2, 10)
 
-    # Sample failure times from the hazard function
-    sampler = HazardSampler(hazard)
-    failure_times = numpy.array([sampler.draw() for _ in range(m)])
+    hazard_functions = [hazard_sine, hazard_piecewise]
 
-    # Apply some non-informative right censoring, just to demonstrate how it's done
-    censor_times = numpy.random.uniform(0.0, 25.0, size=m)
-    y = numpy.minimum(failure_times, censor_times)
-    c = 1.0 * (censor_times > failure_times)
+    for hazard in hazard_functions:
+        # todo: combine three plots into one fig
 
-    # Make some plots of the simulated data
-    # Plot a histogram of failure times from this hazard function
-    plt.hist(failure_times, bins=50)
-    plt.title("Uncensored Failure Times")
-    plt.show()
+        txt = "Hazard function that we will sample from"
+        x = np.linspace(0, 50, 1000)
+        y = hazard(x)
+        plt.plot(x, y)
+        plt.ylabel("hazard")
+        plt.title(txt)
+        plt.show()
 
-    # Plot a histogram of censored failure times from this hazard function
-    plt.hist(y, bins=50)
-    plt.title("Non-informatively Right Censored Failure Times")
-    plt.show()
+        # Sample failure times from the hazard function
+        sampler = HazardSampler(hazard)
+        failure_times = np.array([sampler.draw() for _ in range(m)])
 
-    # Plot the empirical survival function (based on the censored sample) against the
-    # actual survival function
-    t = numpy.arange(0, 20.0, 0.1)
-    S = numpy.array([sampler.survival_function(t[i]) for i in range(len(t))])
-    S_hat = 1.0 - ECDF(failure_times)(t)
-    plt.figure()
-    plt.title("Survival Function Comparison")
-    plt.plot(t, S, "r", lw=3, label="True survival function")
-    plt.plot(t, S_hat, "b--", lw=3, label="Sampled survival function (1 - ECDF)")
-    plt.legend()
-    plt.xlabel("Time")
-    plt.ylabel("Proportion Still Alive")
-    plt.show()
+        # Apply some non-informative right censoring, just to demonstrate how it's done
+        censor_times = np.random.uniform(0.0, 25.0, size=m)
+        y = np.minimum(failure_times, censor_times)
+        c = 1.0 * (censor_times > failure_times)
 
-    print("done")
+        # Make some plots of the simulated data
+        # Plot a histogram of failure times from this hazard function
+        plt.hist(failure_times, bins=50)
+        plt.title("Uncensored Failure Times")
+        plt.show()
+
+        # Plot a histogram of censored failure times from this hazard function
+        plt.hist(y, bins=50)
+        plt.title("Non-informatively Right Censored Failure Times")
+        plt.show()
+
+        # Plot the empirical survival function (based on the censored sample) against
+        # the actual survival function
+        t = np.arange(0, 20.0, 0.1)
+        S = np.array([sampler.survival_function(t[i]) for i in range(len(t))])
+        S_hat = 1.0 - ECDF(failure_times)(t)
+        plt.figure()
+        plt.title("Survival Function Comparison")
+        plt.plot(t, S, "r", lw=3, label="True survival function")
+        plt.plot(t, S_hat, "b--", lw=3, label="Sampled survival function (1 - ECDF)")
+        plt.legend()
+        plt.xlabel("Time")
+        plt.ylabel("Proportion Still Alive")
+        plt.show()
+
+        print("done")
