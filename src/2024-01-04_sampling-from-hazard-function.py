@@ -120,7 +120,7 @@ if __name__ == "__main__":
         return np.exp(np.sin(t) - 2.0)
 
     def hazard_piecewise(t):
-        return np.where(t < 5, 0.01, 0.5)
+        return np.where(t < 5, 1, 3)
 
     hazard_functions = [hazard_sine, hazard_piecewise]
 
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         ax[0].plot(x, y)
         ax[0].set_ylabel("hazard")
         ax[0].set_title(txt)
-        ax[0].set_ylim(0, 0.7)
+        ax[0].set_ylim(0, 3.5)
 
         # Sample failure times from the hazard function
         sampler = HazardSampler(hazard)
