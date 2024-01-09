@@ -115,58 +115,59 @@ if __name__ == "__main__":
     np.random.seed(1)
     m = 1000
 
-    # Use this totally crazy hazard function
+    # Define hazard functions to sample from
     def hazard_sine(t):
         return np.exp(np.sin(t) - 2.0)
 
     def hazard_piecewise(t):
-        return np.where(t < 5, 2, 10)
+        return np.where(t < 5, 0.01, 0.5)
 
     hazard_functions = [hazard_sine, hazard_piecewise]
 
     for hazard in hazard_functions:
-        # todo: combine three plots into one fig
+        fig, ax = plt.subplots(4, 1, sharex=True, figsize=(16, 8))
+        xmax = 30
 
         txt = "Hazard function that we will sample from"
-        x = np.linspace(0, 50, 1000)
+        x = np.linspace(0, xmax, 1000)
         y = hazard(x)
-        plt.plot(x, y)
-        plt.ylabel("hazard")
-        plt.title(txt)
-        plt.show()
+        ax[0].plot(x, y)
+        ax[0].set_ylabel("hazard")
+        ax[0].set_title(txt)
+        ax[0].set_ylim(0, 0.7)
 
         # Sample failure times from the hazard function
         sampler = HazardSampler(hazard)
         failure_times = np.array([sampler.draw() for _ in range(m)])
 
         # Apply some non-informative right censoring, just to demonstrate how it's done
-        censor_times = np.random.uniform(0.0, 25.0, size=m)
+        censor_times = np.random.uniform(0.0, 4, size=m)
         y = np.minimum(failure_times, censor_times)
         c = 1.0 * (censor_times > failure_times)
 
         # Make some plots of the simulated data
         # Plot a histogram of failure times from this hazard function
-        plt.hist(failure_times, bins=50)
-        plt.title("Uncensored Failure Times")
-        plt.show()
+        ax[1].hist(failure_times, bins=50)
+        ax[1].set_title("Uncensored Failure Times")
 
         # Plot a histogram of censored failure times from this hazard function
-        plt.hist(y, bins=50)
-        plt.title("Non-informatively Right Censored Failure Times")
-        plt.show()
+        ax[2].hist(y, bins=50)
+        ax[2].set_title("Non-informatively Right Censored Failure Times")
 
         # Plot the empirical survival function (based on the censored sample) against
         # the actual survival function
-        t = np.arange(0, 20.0, 0.1)
+        t = np.arange(0, xmax, 0.1)
         S = np.array([sampler.survival_function(t[i]) for i in range(len(t))])
-        S_hat = 1.0 - ECDF(failure_times)(t)
-        plt.figure()
-        plt.title("Survival Function Comparison")
-        plt.plot(t, S, "r", lw=3, label="True survival function")
-        plt.plot(t, S_hat, "b--", lw=3, label="Sampled survival function (1 - ECDF)")
-        plt.legend()
-        plt.xlabel("Time")
-        plt.ylabel("Proportion Still Alive")
-        plt.show()
+        S_hat = 1.0 - ECDF(y)(t)
 
-        print("done")
+        ax[3].set_title("Survival Function Comparison")
+        ax[3].plot(t, S, "r", lw=3, label="True survival function")
+        ax[3].plot(t, S_hat, "b--", lw=3, label="Sampled survival function (1 - ECDF)")
+        ax[3].legend()
+        ax[3].set_xlabel("Time")
+        ax[3].set_ylabel("Proportion Still Alive")
+        ax[3].set_ylim(0, 1)
+        plt.tight_layout()
+        fig.show()
+
+    print("done")
