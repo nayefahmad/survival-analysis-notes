@@ -122,6 +122,8 @@ if __name__ == "__main__":
     def hazard_piecewise(t):
         return np.where(t < 5, 1, 3)
 
+    # todo: add weibull hazard fn
+
     hazard_functions = [hazard_sine, hazard_piecewise]
 
     for hazard in hazard_functions:
