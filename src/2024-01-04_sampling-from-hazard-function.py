@@ -1,5 +1,16 @@
 """
-Sampling from an arbitrary hazard function
+# Sampling from an arbitrary hazard function
+
+This notebook shows how we can start with any arbitrary hazard function, and sample
+failure times (both censored and uncensored). We show that the presence of censoring
+causes histograms and ECDFs to be systematically biased if we only work with the
+uncensored data points.
+
+To sample from the hazard function, we do the following:
+1. Integrate the hazard to get cumulative hazard, H(t)
+2. Use standard transfrom from cumulative hazard to survival function, S(t)
+3. Use 1-S(t) to get the CDF
+4. Use inversion to get inverse CDF, and then draw random samples from the CDF.
 
 Reference: https://gist.github.com/jcrudy/10481743
 
