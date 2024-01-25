@@ -10,6 +10,7 @@ Notes on survival and recurrent event analysis, from several different reference
 5. [Confidence intervals for conditional survival estimates](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-08-03_confidence-intervals-for-conditional-survival.md)
 6. [Deriving conditional survival distributions based on the Weibull distribution](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2022-09-20_conditional-survival-for-weibull-distribution.ipynb)
 7. [Sampling from arbitrary hazard functions](https://github.com/nayefahmad/survival-analysis-notes/blob/main/src/2024-01-04_sampling-from-hazard-function.ipynb)
+8. [Using the Brier score to evaluate predictive ability of a survival model](https://github.com/nayefahmad/survival-analysis-notes/blob/main/2024-01-25-brier-score-for-evaluation.ipynb)
 
 ## Repo structure 
 
