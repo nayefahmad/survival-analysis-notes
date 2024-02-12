@@ -26,6 +26,7 @@ from pathlib import Path
 from IPython.core.interactiveshell import InteractiveShell
 
 InteractiveShell.ast_node_interactivity = "all"
+plt.rcParams["figure.figsize"] = [15, 15]
 
 # # Functions
 
