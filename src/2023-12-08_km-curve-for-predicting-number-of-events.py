@@ -97,8 +97,29 @@ def generate_conditional_event_table():
     pass
 
 
-def generate_data():
-    pass
+def generate_data(
+    distribution: scipy.stats._continuous_distns,
+    horizon: int,
+    params: dict,
+    num_units: int = 50,
+    seed: int = None,
+) -> pd.DataFrame:
+    """
+    Generate simulated TBE data for a set of units. Each unit could be e.g. one tail,
+    or one specific physical part.
+    """
+    dfs = []
+    for unit in range(num_units):
+        values, is_uncensored = generate_data_single_unit(
+            distribution, horizon, params, seed
+        )
+        id_col = [unit] * len(values)
+        df_temp = pd.DataFrame(
+            {"id": id_col, "tbe_value": values, "is_uncensored": is_uncensored}
+        )
+        dfs.append(df_temp)
+    df_out = pd.concat(dfs, axis=0)
+    return df_out
 
 
 def generate_data_single_unit(
