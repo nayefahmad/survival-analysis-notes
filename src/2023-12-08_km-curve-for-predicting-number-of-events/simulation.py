@@ -102,8 +102,8 @@ def plot_simulated_data(df_sim_data: pd.DataFrame):
         ax.plot(x_val.tail(1), y_val[-1], "o", mfc="none", color="red")
 
     plt.title(txt)
-    plt.xlabel("unit id")
-    plt.ylabel("cumulative time")
+    plt.ylabel("unit id")
+    plt.xlabel("cumulative time")
     fig.show()
 
 
