@@ -2,6 +2,9 @@ import lifelines
 from lifelines import KaplanMeierFitter
 import pandas as pd
 from sklearn.model_selection import KFold
+import matplotlib.pyplot as plt
+
+from simulation import plot_simulated_data
 
 
 def predict_events_for_new_person_using_event_table(
@@ -64,7 +67,12 @@ def generate_conditional_event_table():
     pass
 
 
-def cross_validate(df_tbe: pd.DataFrame, prediction_horizon: float, num_folds: int = 5):
+def cross_validate(
+    df_tbe: pd.DataFrame,
+    prediction_horizon: float,
+    num_folds: int = 5,
+    debug: bool = False,
+):
     """
     Return metric on each of `num_folds` folds, each created from the df_tbe dataframe.
 
@@ -88,6 +96,11 @@ def cross_validate(df_tbe: pd.DataFrame, prediction_horizon: float, num_folds: i
         y_actuals.append(y_actual)
 
         kmf = KaplanMeierFitter().fit(df_train["tbe_value"], df_train["is_uncensored"])
+        if debug:
+            plot_simulated_data(df_train)
+            kmf.plot_survival_function()
+            plt.show()
+
         y_pred = predict_events_for_new_person_using_event_table(
             prediction_horizon, kmf.event_table, df_train
         )
@@ -111,3 +124,7 @@ def ground_truth_metric(df_test: pd.DataFrame, prediction_horizon: float) -> flo
     num_units = df_test["id"].nunique()
     expected_events_per_unit = num_events_all_units / num_units
     return expected_events_per_unit
+
+
+if __name__ == "__main__":
+    plt.plot()
