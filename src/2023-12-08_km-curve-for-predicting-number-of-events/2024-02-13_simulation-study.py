@@ -12,11 +12,11 @@ pd.set_option("display.width", 500)
 SEED = 2024
 np.random.seed(SEED)
 
-NUM_ITERATIONS = 1000
+NUM_ITERATIONS = 100
 CV_FOLDS = 5
 
 SIM_HORIZON = 999
-FORECAST_HORIZON = 100
+FORECAST_HORIZON = 50
 NUM_TAILS = 15
 
 DIST = exponweib
@@ -50,7 +50,9 @@ for idx in range(NUM_ITERATIONS):
                 num_units=NUM_TAILS,
             )
 
-            cv_scores = cross_validate(df_tbe, FORECAST_HORIZON, CV_FOLDS)
+            cv_scores, y_actuals, y_preds = cross_validate(
+                df_tbe, FORECAST_HORIZON, CV_FOLDS
+            )
             iter_results.append(cv_scores)
 
         except AssertionError as e:
@@ -78,9 +80,11 @@ print(df_results)
 txt = f"Distribution of cross-validated MAE across {len(df_results)} iterations"
 txt += f"\nParams: {params}"
 txt += f"\nNum tails: {NUM_TAILS}"
+txt += f"\nForecast horizon: {FORECAST_HORIZON}"
 fig, ax = plt.subplots()
 ax.hist(df_results["mean_abs_error"])
 ax.set_title(txt)
+plt.tight_layout()
 plt.show()
 
 

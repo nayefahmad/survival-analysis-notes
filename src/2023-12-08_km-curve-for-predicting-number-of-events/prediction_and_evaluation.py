@@ -74,25 +74,29 @@ def cross_validate(df_tbe: pd.DataFrame, prediction_horizon: float, num_folds: i
     ids = [id for id in range(df_tbe["id"].nunique())]
 
     cv_scores = []
+    y_actuals = []
+    y_preds = []
     for idx, (train, test) in enumerate(kf.split(ids)):
         print(f"fold_num: {idx}")
         print(f"train indices: {train}")
-        print(f"test indices: {test} \n")
+        print(f"test indices: {test}")
 
         df_train = df_tbe.query("id.isin(@train)")
         df_test = df_tbe.query("id.isin(@test)")
 
         y_actual = ground_truth_metric(df_test, prediction_horizon)
+        y_actuals.append(y_actual)
 
         kmf = KaplanMeierFitter().fit(df_train["tbe_value"], df_train["is_uncensored"])
         y_pred = predict_events_for_new_person_using_event_table(
             prediction_horizon, kmf.event_table, df_train
         )
+        y_preds.append(y_pred)
 
         error = y_actual - y_pred
         cv_scores.append(error)
 
-    return cv_scores
+    return cv_scores, y_actuals, y_preds
 
 
 def ground_truth_metric(df_test: pd.DataFrame, prediction_horizon: float) -> float:
