@@ -37,11 +37,33 @@ iter_results = []
 # several parts/FFF groups
 for idx in range(NUM_ITERATIONS):
     print(f"iter {idx}".ljust(88, "-"))
-    df_tbe = generate_data(
-        DIST, SIM_HORIZON, params, seed=SEED + idx, num_units=NUM_TAILS
-    )
-    cv_scores = cross_validate(df_tbe, FORECAST_HORIZON, CV_FOLDS)
-    iter_results.append(cv_scores)
+    df_tbe = None
+    attempt = 0
+    max_attempts = 5
+    while df_tbe is None and attempt < max_attempts:
+        try:
+            df_tbe = generate_data(
+                DIST,
+                SIM_HORIZON,
+                params,
+                seed=SEED + idx + attempt,
+                num_units=NUM_TAILS,
+            )
+
+            cv_scores = cross_validate(df_tbe, FORECAST_HORIZON, CV_FOLDS)
+            iter_results.append(cv_scores)
+
+        except AssertionError as e:
+            print(f"ERROR: {e}")
+            txt = "SUGGESTION: handle cases where the sim horizon is too short, where"
+            txt += "the very first sample goes over the horizon"
+            print(txt)
+            # to prevent infinite while loop, we need to change the seed
+            attempt += 1
+
+        if attempt >= max_attempts:
+            print("Maximum attempts reached, moving to next iteration.")
+            break
 
 
 cols = [f"error_fold_0{x + 1}" for x in range(CV_FOLDS)]
@@ -53,8 +75,9 @@ df_results = pd.concat([results, mae_metric], axis=1)
 df_results = df_results.rename(columns={0: "mean_abs_error"})
 print(df_results)
 
-txt = f"Distribution of cross-validated MAE across {NUM_ITERATIONS} iterations"
+txt = f"Distribution of cross-validated MAE across {len(df_results)} iterations"
 txt += f"\nParams: {params}"
+txt += f"\nNum tails: {NUM_TAILS}"
 fig, ax = plt.subplots()
 ax.hist(df_results["mean_abs_error"])
 ax.set_title(txt)
