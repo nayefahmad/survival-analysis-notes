@@ -11,17 +11,16 @@ pd.set_option("display.width", 500)
 
 SEED = 2024
 np.random.seed(SEED)
-
-NUM_ITERATIONS = 100
 CV_FOLDS = 5
-
-SIM_HORIZON = 999
-FORECAST_HORIZON = 200
-NUM_TAILS = 15
 
 DIST = exponweib
 PARAM_C_RANGE = [0.7, 3.0]
 PARAM_SCALE_RANGE = [20, 500]
+
+SIM_HORIZON = 999
+NUM_ITERATIONS = 100
+FORECAST_HORIZON = 100
+NUM_TAILS = 15
 params = {"a": 1, "c": 0.9, "scale": 100}
 
 randomise_params = False
@@ -40,7 +39,7 @@ for idx in range(NUM_ITERATIONS):
     print(f"iter {idx}".ljust(88, "-"))
     df_tbe = None
     attempt = 0
-    max_attempts = 5
+    max_attempts = 10
     while df_tbe is None and attempt < max_attempts:
         try:
             df_tbe = generate_data(
@@ -59,7 +58,7 @@ for idx in range(NUM_ITERATIONS):
 
         except AssertionError as e:
             print(f"ERROR: {e}")
-            txt = "SUGGESTION: handle cases where the sim horizon is too short, where"
+            txt = "SUGGESTION: handle cases where the sim horizon is too short, where "
             txt += "the very first sample goes over the horizon"
             print(txt)
             # to prevent infinite while loop, we need to change the seed
@@ -73,7 +72,7 @@ for idx in range(NUM_ITERATIONS):
 cols = [f"error_fold_0{x + 1}" for x in range(CV_FOLDS)]
 results = pd.DataFrame(iter_results, columns=cols)
 df_y_actuals = pd.DataFrame(iter_y_actuals)
-mean_y_actual_all_sims = np.mean(df_y_actuals.values.flatten())
+mean_y_actual_all_sims = np.round(np.mean(df_y_actuals.values.flatten()), decimals=2)
 
 mae_metric = results.abs().mean(axis=1)
 
@@ -84,7 +83,7 @@ print(df_results)
 txt = f"Distribution of cross-validated MAE across {len(df_results)} iterations"
 txt += f"\nParams: {params}"
 txt += f"\nNum tails: {NUM_TAILS}"
-txt += f"\nForecast horizon: {FORECAST_HORIZON}"
+txt += f"\nForecast horizon: {FORECAST_HORIZON}; sim horizon: {SIM_HORIZON}"
 txt += f"\nNote: mean(y_actual)={mean_y_actual_all_sims}"
 fig, ax = plt.subplots()
 ax.hist(df_results["mean_abs_error"])
