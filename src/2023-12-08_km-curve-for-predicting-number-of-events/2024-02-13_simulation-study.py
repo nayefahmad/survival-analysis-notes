@@ -16,7 +16,7 @@ NUM_ITERATIONS = 100
 CV_FOLDS = 5
 
 SIM_HORIZON = 999
-FORECAST_HORIZON = 50
+FORECAST_HORIZON = 200
 NUM_TAILS = 15
 
 DIST = exponweib
@@ -33,6 +33,7 @@ if randomise_params:
 
 print(f"INFO: params: {params}")
 iter_results = []
+iter_y_actuals = []
 # In this simulation study, we run several iterations. For actual data, we can run over
 # several parts/FFF groups
 for idx in range(NUM_ITERATIONS):
@@ -54,6 +55,7 @@ for idx in range(NUM_ITERATIONS):
                 df_tbe, FORECAST_HORIZON, CV_FOLDS
             )
             iter_results.append(cv_scores)
+            iter_y_actuals.append(y_actuals)
 
         except AssertionError as e:
             print(f"ERROR: {e}")
@@ -70,6 +72,8 @@ for idx in range(NUM_ITERATIONS):
 
 cols = [f"error_fold_0{x + 1}" for x in range(CV_FOLDS)]
 results = pd.DataFrame(iter_results, columns=cols)
+df_y_actuals = pd.DataFrame(iter_y_actuals)
+mean_y_actual_all_sims = np.mean(df_y_actuals.values.flatten())
 
 mae_metric = results.abs().mean(axis=1)
 
@@ -81,6 +85,7 @@ txt = f"Distribution of cross-validated MAE across {len(df_results)} iterations"
 txt += f"\nParams: {params}"
 txt += f"\nNum tails: {NUM_TAILS}"
 txt += f"\nForecast horizon: {FORECAST_HORIZON}"
+txt += f"\nNote: mean(y_actual)={mean_y_actual_all_sims}"
 fig, ax = plt.subplots()
 ax.hist(df_results["mean_abs_error"])
 ax.set_title(txt)
