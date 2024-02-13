@@ -1,4 +1,5 @@
 import lifelines
+from lifelines import KaplanMeierFitter
 import pandas as pd
 from sklearn.model_selection import KFold
 
@@ -63,28 +64,46 @@ def generate_conditional_event_table():
     pass
 
 
-def cross_validate(folds: int = 5):
+def cross_validate(df_tbe: pd.DataFrame, prediction_horizon: float, num_folds: int = 5):
     """
-    todo: add `df_tbe_data: pd.DataFrame` as an arg. This is especially useful when it's
-      real data (not simulated)
+    Return metric on each of `num_folds` folds, each created from the df_tbe dataframe.
+
+    Errors are given as `y_actual - y_predicted`.
     """
-    kf = KFold(n_splits=folds, shuffle=True)
-    # ids = [id for id in range(df_simulated_data['id'].nunique())]
-    ids = [id for id in range(50)]
+    kf = KFold(n_splits=num_folds, shuffle=True)
+    ids = [id for id in range(df_tbe["id"].nunique())]
 
     cv_scores = []
     for idx, (train, test) in enumerate(kf.split(ids)):
         print(f"fold_num: {idx}")
         print(f"train indices: {train}")
-        print(f"test indices: {test}")
-        print("calculate metric on test")
-        print("fit KM and calculate metric on train")
-        print("record error for this split: cv_scores[idx] = current_score")
-        print("end".ljust(90, "-"))
-        print("\n")
+        print(f"test indices: {test} \n")
+
+        df_train = df_tbe.query("id.isin(@train)")
+        df_test = df_tbe.query("id.isin(@test)")
+
+        y_actual = ground_truth_metric(df_test, prediction_horizon)
+
+        kmf = KaplanMeierFitter().fit(df_train["tbe_value"], df_train["is_uncensored"])
+        y_pred = predict_events_for_new_person_using_event_table(
+            prediction_horizon, kmf.event_table, df_train
+        )
+
+        error = y_actual - y_pred
+        cv_scores.append(error)
 
     return cv_scores
 
 
-if __name__ == "__main__":
-    cross_validate()
+def ground_truth_metric(df_test: pd.DataFrame, prediction_horizon: float) -> float:
+    """
+    Calculate the number of events expected for a single unit in the prediction horizon,
+    using the test data.
+    """
+    all_events_in_horizon = df_test.query(
+        "tbe_value <= @prediction_horizon & is_uncensored == 1"
+    )
+    num_events_all_units = len(all_events_in_horizon)
+    num_units = df_test["id"].nunique()
+    expected_events_per_unit = num_events_all_units / num_units
+    return expected_events_per_unit

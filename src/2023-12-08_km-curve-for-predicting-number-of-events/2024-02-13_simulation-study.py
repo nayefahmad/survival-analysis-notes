@@ -1,0 +1,64 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from simulation import generate_data
+from prediction_and_evaluation import cross_validate
+from scipy.stats import exponweib
+
+pd.set_option("display.max_columns", 15)
+pd.set_option("display.width", 500)
+
+SEED = 2024
+np.random.seed(SEED)
+
+NUM_ITERATIONS = 1000
+CV_FOLDS = 5
+
+SIM_HORIZON = 999
+FORECAST_HORIZON = 100
+NUM_TAILS = 15
+
+DIST = exponweib
+PARAM_C_RANGE = [0.7, 3.0]
+PARAM_SCALE_RANGE = [20, 500]
+params = {"a": 1, "c": 0.9, "scale": 100}
+
+randomise_params = False
+if randomise_params:
+    c = np.random.uniform(low=PARAM_C_RANGE[0], high=PARAM_C_RANGE[1])
+    scale = np.random.uniform(low=PARAM_SCALE_RANGE[0], high=PARAM_SCALE_RANGE[1])
+    params = {"a": 1, "c": c, "scale": scale}
+
+
+print(f"INFO: params: {params}")
+iter_results = []
+# In this simulation study, we run several iterations. For actual data, we can run over
+# several parts/FFF groups
+for idx in range(NUM_ITERATIONS):
+    print(f"iter {idx}".ljust(88, "-"))
+    df_tbe = generate_data(
+        DIST, SIM_HORIZON, params, seed=SEED + idx, num_units=NUM_TAILS
+    )
+    cv_scores = cross_validate(df_tbe, FORECAST_HORIZON, CV_FOLDS)
+    iter_results.append(cv_scores)
+
+
+cols = [f"error_fold_0{x + 1}" for x in range(CV_FOLDS)]
+results = pd.DataFrame(iter_results, columns=cols)
+
+mae_metric = results.abs().mean(axis=1)
+
+df_results = pd.concat([results, mae_metric], axis=1)
+df_results = df_results.rename(columns={0: "mean_abs_error"})
+print(df_results)
+
+txt = f"Distribution of cross-validated MAE across {NUM_ITERATIONS} iterations"
+txt += f"\nParams: {params}"
+fig, ax = plt.subplots()
+ax.hist(df_results["mean_abs_error"])
+ax.set_title(txt)
+plt.show()
+
+
+print("done")

@@ -109,19 +109,17 @@ def plot_simulated_data(df_sim_data: pd.DataFrame):
 
 if __name__ == "__main__":
     SEED = 2024
-    generate_data_single_unit(
-        exponweib, 999, {"a": 1, "c": 0.9, "scale": 100}, seed=SEED
-    )
-    generate_data_single_unit(lognorm, 999, {"s": 0.8, "scale": 100}, seed=SEED)
+    weib_params_01 = {"a": 1, "c": 0.9, "scale": 100}
+    weib_params_02 = {"a": 1, "c": 1.9, "scale": 100}
+    lognorm_params_01 = {"s": 0.8, "scale": 80}
 
-    df = generate_data(
-        exponweib, 999, {"a": 1, "c": 0.9, "scale": 100}, seed=SEED, num_units=15
-    )
+    df = generate_data(exponweib, 999, weib_params_01, seed=SEED, num_units=15)
     plot_simulated_data(df)
 
-    df_02 = generate_data(
-        exponweib, 500, {"a": 1, "c": 0.9, "scale": 100}, seed=SEED + 1, num_units=15
-    )
+    df_02 = generate_data(exponweib, 500, weib_params_02, seed=SEED + 1, num_units=15)
     plot_simulated_data(df_02)
+
+    df_03 = generate_data(lognorm, 999, lognorm_params_01, seed=SEED)
+    plot_simulated_data(df_03)
 
     print("done")
