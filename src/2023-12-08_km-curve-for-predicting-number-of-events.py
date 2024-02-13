@@ -33,6 +33,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 from scipy.stats import exponweib, lognorm
+from sklearn.model_selection import KFold
 from typing import Tuple
 
 
@@ -96,6 +97,10 @@ def generate_conditional_event_table():
     pass
 
 
+def generate_data():
+    pass
+
+
 def generate_data_single_unit(
     distribution: scipy.stats._continuous_distns,
     horizon: int,
@@ -148,6 +153,32 @@ def assign_censoring(
 SEED = 2024
 generate_data_single_unit(exponweib, 999, {"a": 1, "c": 0.9, "scale": 100}, seed=SEED)
 generate_data_single_unit(lognorm, 999, {"s": 0.8, "scale": 100}, seed=SEED)
+
+
+def cross_validate(folds: int = 5):
+    """
+    todo: add `df_tbe_data: pd.DataFrame` as an arg. This is especially useful when it's
+      real data (not simulated)
+    """
+    kf = KFold(n_splits=folds, shuffle=True)
+    # ids = [id for id in range(df_simulated_data['id'].nunique())]
+    ids = [id for id in range(50)]
+
+    cv_scores = []
+    for idx, (train, test) in enumerate(kf.split(ids)):
+        print(f"fold_num: {idx}")
+        print(f"train indices: {train}")
+        print(f"test indices: {test}")
+        print("calculate metric on test")
+        print("fit KM and calculate metric on train")
+        print("record error for this split: cv_scores[idx] = current_score")
+        print("end".ljust(90, "-"))
+        print("\n")
+
+    return cv_scores
+
+
+cross_validate()
 
 
 # Main analysis:
