@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.stats
@@ -18,15 +19,16 @@ def generate_data(
     """
     dfs = []
     for unit in range(num_units):
+        unit_seed = seed + unit
         values, is_uncensored = generate_data_single_unit(
-            distribution, horizon, params, seed
+            distribution, horizon, params, unit_seed
         )
         id_col = [unit] * len(values)
         df_temp = pd.DataFrame(
             {"id": id_col, "tbe_value": values, "is_uncensored": is_uncensored}
         )
         dfs.append(df_temp)
-    df_out = pd.concat(dfs, axis=0)
+    df_out = pd.concat(dfs, axis=0).reset_index(drop=True)
     return df_out
 
 
@@ -79,9 +81,47 @@ def assign_censoring(
     return sample_values, is_uncensored
 
 
+def plot_simulated_data(df_sim_data: pd.DataFrame):
+    """
+    Plot TBEs, with one row for each unit
+    """
+    units = df_sim_data["id"].unique()
+
+    txt = "TBE vs time plot"
+    fig, ax = plt.subplots()
+    for unit in units:
+        ax.axhline(unit, color="darkgrey", linewidth=0.5)
+        num_vals = len(df_sim_data.query("id==@unit"))
+        y_val = [unit] * num_vals
+        x_val = df_sim_data.query("id==@unit")["tbe_value"].cumsum()
+
+        # plot uncensored data points
+        ax.plot(x_val[:-1], y_val[:-1], "x", color="red")
+
+        # plot censored data points
+        ax.plot(x_val.tail(1), y_val[-1], "o", mfc="none", color="red")
+
+    plt.title(txt)
+    plt.xlabel("unit id")
+    plt.ylabel("cumulative time")
+    fig.show()
+
+
 if __name__ == "__main__":
     SEED = 2024
     generate_data_single_unit(
         exponweib, 999, {"a": 1, "c": 0.9, "scale": 100}, seed=SEED
     )
     generate_data_single_unit(lognorm, 999, {"s": 0.8, "scale": 100}, seed=SEED)
+
+    df = generate_data(
+        exponweib, 999, {"a": 1, "c": 0.9, "scale": 100}, seed=SEED, num_units=15
+    )
+    plot_simulated_data(df)
+
+    df_02 = generate_data(
+        exponweib, 500, {"a": 1, "c": 0.9, "scale": 100}, seed=SEED + 1, num_units=15
+    )
+    plot_simulated_data(df_02)
+
+    print("done")
