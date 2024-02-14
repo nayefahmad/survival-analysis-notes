@@ -1,5 +1,6 @@
 import lifelines
 from lifelines import KaplanMeierFitter
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
@@ -30,15 +31,8 @@ def predict_events_for_new_person_using_event_table(
     - number of contributing units = 8
     - expected number of events per unit within 5 time units = 6/8 = .75
 
-    Breaking this down to the level of each id:
-    - id=1 had 1 event on or before t=5
-    - id=2 had 0 events on or before t=5
-    - id=3 had 0 events on or before t=5
-    - id=4 had 1 event on or before t=5
-    - id=5 had 1 event on or before t=5
-    - id=6 had 1 event on or before t=5
-    - id=7 had 1 event on or before t=5
-    - id=8 had 1 event on or before t=5
+    - todo: return a confidence interval using standard normal-based CI, clipped to be
+       between 0 and 1.
     """
     num_unique_units = df_tbe["id"].nunique()
 
@@ -47,6 +41,14 @@ def predict_events_for_new_person_using_event_table(
         / num_unique_units
     )
     return prediction
+
+
+def dummy_predictor() -> float:
+    """
+    A baseline to compare the "event table" method above. This will just return a
+    value from a uniform distribution on the [0, 1] range.
+    """
+    return np.random.uniform(low=0, high=1)
 
 
 def predict_prob_one_or_more_events_by_specified_time(
@@ -101,6 +103,7 @@ def cross_validate(
             kmf.plot_survival_function()
             plt.show()
 
+        # This can be replaced with any other prediction function:
         y_pred = predict_events_for_new_person_using_event_table(
             prediction_horizon, kmf.event_table, df_train
         )

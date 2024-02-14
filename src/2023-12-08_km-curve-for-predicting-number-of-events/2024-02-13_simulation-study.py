@@ -58,7 +58,7 @@ for idx in range(NUM_ITERATIONS):
 
         except AssertionError as e:
             print(f"ERROR: {e}")
-            txt = "SUGGESTION: handle cases where the sim horizon is too short, where "
+            txt = "TODO: handle cases where the sim horizon is too short, where "
             txt += "the very first sample goes over the horizon"
             print(txt)
             # to prevent infinite while loop, we need to change the seed
