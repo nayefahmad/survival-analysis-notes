@@ -9,6 +9,8 @@ from simulation import generate_data
 from prediction_and_evaluation import (
     cross_validate,
     predict_events_for_new_person_using_event_table,
+    dummy_predictor_uniform,
+    dummy_predictor_always_one,
 )
 from scipy.stats import exponweib
 
@@ -51,8 +53,10 @@ params_05 = SimulationParams(forecast_horizon=200)
 params_06 = SimulationParams(forecast_horizon=1000)
 params_07 = SimulationParams(sim_horizon=300, num_iterations=300)
 params_08 = SimulationParams(sim_horizon=200, num_iterations=300)
+params_09 = SimulationParams(forecast_function=dummy_predictor_uniform)
+params_10 = SimulationParams(forecast_function=dummy_predictor_always_one)
 
-PARAMS = params_baseline  # update this as necessary
+PARAMS = params_10  # update this as necessary
 
 randomise_params = False
 if randomise_params:
@@ -84,7 +88,10 @@ for idx in range(PARAMS.num_iterations):
             )
 
             cv_scores, y_actuals, y_preds = cross_validate(
-                df_tbe, PARAMS.forecast_horizon, PARAMS.cv_folds
+                df_tbe,
+                PARAMS.forecast_horizon,
+                PARAMS.cv_folds,
+                PARAMS.forecast_function,
             )
             iter_results.append(cv_scores)
             iter_y_actuals.append(y_actuals)
