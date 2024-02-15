@@ -39,22 +39,31 @@ np.random.seed(params_baseline.seed)
 
 # create new scenarios by instantiating SimulationParams instances:
 params_02 = SimulationParams(num_tails=100)
+params_03 = SimulationParams()
+params_03.params["c"] = 1.9
+params_04 = SimulationParams(forecast_horizon=50)
+params_05 = SimulationParams(forecast_horizon=200)
+params_06 = SimulationParams(forecast_horizon=1000)
+params_07 = SimulationParams(sim_horizon=300, num_iterations=300)
+params_08 = SimulationParams(sim_horizon=200, num_iterations=300)
 
-p = params_baseline  # update this as necessary
+PARAMS = params_08  # update this as necessary
 
 randomise_params = False
 if randomise_params:
-    c = np.random.uniform(low=p.param_c_range[0], high=p.param_c_range[1])
-    scale = np.random.uniform(low=p.param_scale_range[0], high=p.param_scale_range[1])
-    p.params = {"a": 1, "c": c, "scale": scale}
+    c = np.random.uniform(low=PARAMS.param_c_range[0], high=PARAMS.param_c_range[1])
+    scale = np.random.uniform(
+        low=PARAMS.param_scale_range[0], high=PARAMS.param_scale_range[1]
+    )
+    PARAMS.params = {"a": 1, "c": c, "scale": scale}
 
 
-print(f"INFO: params: {p}")
+print(f"INFO: params: {PARAMS}")
 iter_results = []
 iter_y_actuals = []
 # In this simulation study, we run several iterations. For actual data, we can run over
 # several parts/FFF groups
-for idx in range(p.num_iterations):
+for idx in range(PARAMS.num_iterations):
     print(f"iter {idx}".ljust(88, "-"))
     df_tbe = None
     attempt = 0
@@ -62,15 +71,15 @@ for idx in range(p.num_iterations):
     while df_tbe is None and attempt < max_attempts:
         try:
             df_tbe = generate_data(
-                p.dist,
-                p.sim_horizon,
-                p.params,
-                seed=p.seed + idx + attempt,
-                num_units=p.num_tails,
+                PARAMS.dist,
+                PARAMS.sim_horizon,
+                PARAMS.params,
+                seed=PARAMS.seed + idx + attempt,
+                num_units=PARAMS.num_tails,
             )
 
             cv_scores, y_actuals, y_preds = cross_validate(
-                df_tbe, p.forecast_horizon, p.cv_folds
+                df_tbe, PARAMS.forecast_horizon, PARAMS.cv_folds
             )
             iter_results.append(cv_scores)
             iter_y_actuals.append(y_actuals)
@@ -88,7 +97,7 @@ for idx in range(p.num_iterations):
             break
 
 
-cols = [f"error_fold_0{x + 1}" for x in range(p.cv_folds)]
+cols = [f"error_fold_0{x + 1}" for x in range(PARAMS.cv_folds)]
 results = pd.DataFrame(iter_results, columns=cols)
 df_y_actuals = pd.DataFrame(iter_y_actuals)
 mean_y_actual_all_sims = np.round(np.mean(df_y_actuals.values.flatten()), decimals=2)
@@ -100,9 +109,9 @@ df_results = df_results.rename(columns={0: "mean_abs_error"})
 print(df_results)
 
 txt = f"Distribution of cross-validated MAE across {len(df_results)} iterations"
-txt += f"\nParams: {p.params}"
-txt += f"\nNum tails: {p.num_tails}"
-txt += f"\nForecast horizon: {p.forecast_horizon}; sim horizon: {p.sim_horizon}"
+txt += f"\nParams: {PARAMS.params}"
+txt += f"\nNum tails: {PARAMS.num_tails}"
+txt += f"\nForecast horizon:{PARAMS.forecast_horizon}; sim horizon:{PARAMS.sim_horizon}"
 txt += f"\nNote: mean(y_actual)={mean_y_actual_all_sims}"
 fig, ax = plt.subplots()
 ax.hist(df_results["mean_abs_error"])
