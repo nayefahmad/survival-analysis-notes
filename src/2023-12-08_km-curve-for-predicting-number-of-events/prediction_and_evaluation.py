@@ -1,9 +1,10 @@
 import lifelines
 from lifelines import KaplanMeierFitter
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import KFold
-import matplotlib.pyplot as plt
+from typing import Callable
 
 from simulation import plot_simulated_data
 
@@ -43,7 +44,7 @@ def predict_events_for_new_person_using_event_table(
     return prediction
 
 
-def dummy_predictor_uniform() -> float:
+def dummy_predictor_uniform(*args) -> float:
     """
     A baseline to compare the "event table" method above against. This will just
     return a value from a uniform distribution on the [0, 1] range.
@@ -51,7 +52,7 @@ def dummy_predictor_uniform() -> float:
     return np.random.uniform(low=0, high=1)
 
 
-def dummy_predictor_always_one() -> float:
+def dummy_predictor_always_one(*args) -> float:
     """
     A baseline to compare the "event table" method above against. This will just return
     the value 1.0 in all cases. It can be considered a best-case-scenario of the current
@@ -83,6 +84,7 @@ def cross_validate(
     df_tbe: pd.DataFrame,
     prediction_horizon: float,
     num_folds: int = 5,
+    forecast_function: Callable = predict_events_for_new_person_using_event_table,
     debug: bool = False,
 ):
     """
@@ -114,9 +116,7 @@ def cross_validate(
             plt.show()
 
         # This can be replaced with any other prediction function:
-        y_pred = predict_events_for_new_person_using_event_table(
-            prediction_horizon, kmf.event_table, df_train
-        )
+        y_pred = forecast_function(prediction_horizon, kmf.event_table, df_train)
         y_preds.append(y_pred)
 
         error = y_actual - y_pred

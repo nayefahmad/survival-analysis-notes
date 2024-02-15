@@ -3,10 +3,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.stats
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Callable
 
 from simulation import generate_data
-from prediction_and_evaluation import cross_validate
+from prediction_and_evaluation import (
+    cross_validate,
+    predict_events_for_new_person_using_event_table,
+)
 from scipy.stats import exponweib
 
 pd.set_option("display.max_columns", 15)
@@ -32,6 +35,8 @@ class SimulationParams:
     forecast_horizon: int = 100
     num_tails: int = 15
 
+    forecast_function: Callable = predict_events_for_new_person_using_event_table
+
 
 # set baseline scenario:
 params_baseline = SimulationParams()
@@ -47,7 +52,7 @@ params_06 = SimulationParams(forecast_horizon=1000)
 params_07 = SimulationParams(sim_horizon=300, num_iterations=300)
 params_08 = SimulationParams(sim_horizon=200, num_iterations=300)
 
-PARAMS = params_08  # update this as necessary
+PARAMS = params_baseline  # update this as necessary
 
 randomise_params = False
 if randomise_params:
