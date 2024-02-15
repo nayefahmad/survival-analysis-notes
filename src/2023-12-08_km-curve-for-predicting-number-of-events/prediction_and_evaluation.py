@@ -43,12 +43,22 @@ def predict_events_for_new_person_using_event_table(
     return prediction
 
 
-def dummy_predictor() -> float:
+def dummy_predictor_uniform() -> float:
     """
-    A baseline to compare the "event table" method above. This will just return a
-    value from a uniform distribution on the [0, 1] range.
+    A baseline to compare the "event table" method above against. This will just
+    return a value from a uniform distribution on the [0, 1] range.
     """
     return np.random.uniform(low=0, high=1)
+
+
+def dummy_predictor_always_one() -> float:
+    """
+    A baseline to compare the "event table" method above against. This will just return
+    the value 1.0 in all cases. It can be considered a best-case-scenario of the current
+    MHLH methodology in the cases where there is high recurrence (because we are able
+    to predict as high as 1.0, but never higher.
+    """
+    return 1.0
 
 
 def predict_prob_one_or_more_events_by_specified_time(
