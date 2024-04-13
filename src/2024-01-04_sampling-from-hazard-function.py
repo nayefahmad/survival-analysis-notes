@@ -8,7 +8,7 @@ uncensored data points.
 
 To sample from the hazard function, we do the following:
 1. Integrate the hazard to get cumulative hazard, H(t)
-2. Use standard transfrom from cumulative hazard to survival function, S(t)
+2. Use a standard transform from cumulative hazard to survival function, S(t)
 3. Use 1-S(t) to get the CDF
 4. Use inversion to get inverse CDF, and then draw random samples from the CDF.
 
@@ -16,10 +16,12 @@ Reference: https://gist.github.com/jcrudy/10481743
 
 """
 
+from functools import partial
 import numpy as np
 import scipy.integrate
 from matplotlib import pyplot as plt
 from statsmodels.distributions import ECDF
+from typing import Callable
 
 
 class HazardSampler:
@@ -121,23 +123,53 @@ class InverseCdf:
         return current_x
 
 
+def set_params() -> np.array:
+    """
+    Set the coefficients of each variable that will be used in the simuatation of the
+    Cox PH model
+    """
+    return np.array([-1, 1, 1, 0, 0.002, 0])
+
+
+def individual_hazard_function(
+    t: float, baseline_hazard: Callable, X: np.array
+) -> float:
+    """
+    Use the baseline hazard to calculate baseline hazard, then adjust it using the
+    relative hazard.
+
+    - t: time at which to calculate individual hazard
+    - X: np.array of time-invarying features for this individual
+    """
+    params = set_params()
+    base = baseline_hazard(t)
+    relative_hazard = np.exp(X @ params.T)
+    return base * relative_hazard
+
+
 if __name__ == "__main__":
     # Set a random seed and sample size
     np.random.seed(1)
-    m = 1000
+    m = 100
 
     # Define hazard functions to sample from
     def hazard_sine(t):
         return np.exp(np.sin(t) - 2.0)
 
     def hazard_piecewise(t):
-        return np.where(t < 5, 1, 3)
+        return np.where(t < 5, 0.1, 0.3)
+
+    hazard_person_01 = partial(
+        individual_hazard_function,
+        baseline_hazard=hazard_sine,
+        X=np.array([1, 0, 0, 0, 0, 0]),
+    )
 
     # todo: add weibull hazard fn
 
-    hazard_functions = [hazard_sine, hazard_piecewise]
+    hazard_functions = [hazard_sine, hazard_piecewise, hazard_person_01]
 
-    for hazard in hazard_functions:
+    for idx, hazard in enumerate(hazard_functions):
         fig, ax = plt.subplots(4, 1, sharex=True, figsize=(16, 8))
         xmax = 30
 
@@ -148,24 +180,28 @@ if __name__ == "__main__":
         ax[0].set_ylabel("hazard")
         ax[0].set_title(txt)
         ax[0].set_ylim(0, 3.5)
+        ax[0].set_xlim(0, xmax + 10)
 
         # Sample failure times from the hazard function
         sampler = HazardSampler(hazard)
         failure_times = np.array([sampler.draw() for _ in range(m)])
+        print(f"Hazard {idx}, max failure time: {np.max(failure_times):.5f}")
 
         # Apply some non-informative right censoring, just to demonstrate how it's done
-        censor_times = np.random.uniform(0.0, 4, size=m)
+        censor_times = np.random.uniform(0.0, xmax, size=m)
         y = np.minimum(failure_times, censor_times)
         c = 1.0 * (censor_times > failure_times)
 
         # Make some plots of the simulated data
         # Plot a histogram of failure times from this hazard function
         ax[1].hist(failure_times, bins=50)
-        ax[1].set_title("Uncensored Failure Times")
+        ax[1].set_title("True Failure Times")
+        ax[1].set_xlim(0, xmax + 10)
 
         # Plot a histogram of censored failure times from this hazard function
         ax[2].hist(y, bins=50)
-        ax[2].set_title("Non-informatively Right Censored Failure Times")
+        ax[2].set_title("Observed Failure Times (Including Censored)")
+        ax[2].set_xlim(0, xmax + 10)
 
         # Plot the empirical survival function (based on the censored sample) against
         # the actual survival function
@@ -180,6 +216,8 @@ if __name__ == "__main__":
         ax[3].set_xlabel("Time")
         ax[3].set_ylabel("Proportion Still Alive")
         ax[3].set_ylim(0, 1)
+        ax[3].set_xlim(0, xmax + 10)
+
         plt.tight_layout()
         fig.show()
 
