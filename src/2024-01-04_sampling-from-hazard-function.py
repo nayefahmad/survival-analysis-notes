@@ -157,7 +157,7 @@ if __name__ == "__main__":
         return np.exp(np.sin(t) - 2.0)
 
     def hazard_piecewise(t):
-        return np.where(t < 5, 0.1, 0.3)
+        return np.where(t < 5, 1, 3)
 
     hazard_person_01 = partial(
         individual_hazard_function,
@@ -184,11 +184,13 @@ if __name__ == "__main__":
 
         # Sample failure times from the hazard function
         sampler = HazardSampler(hazard)
+        print(f"Hazard {idx}, drawing samples for true failure times ... ")
         failure_times = np.array([sampler.draw() for _ in range(m)])
         print(f"Hazard {idx}, max failure time: {np.max(failure_times):.5f}")
 
         # Apply some non-informative right censoring, just to demonstrate how it's done
-        censor_times = np.random.uniform(0.0, xmax, size=m)
+        print(f"Hazard {idx}, drawing samples for censor times ... ")
+        censor_times = np.array([sampler.draw() for _ in range(m)])
         y = np.minimum(failure_times, censor_times)
         c = 1.0 * (censor_times > failure_times)
 
