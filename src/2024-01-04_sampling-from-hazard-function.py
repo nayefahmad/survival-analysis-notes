@@ -21,7 +21,7 @@ import numpy as np
 import scipy.integrate
 from matplotlib import pyplot as plt
 from statsmodels.distributions import ECDF
-from typing import Callable
+from typing import Callable, Tuple
 
 
 class HazardSampler:
@@ -123,6 +123,67 @@ class InverseCdf:
         return current_x
 
 
+def create_plots(idx: int, hazard: Callable) -> None:
+    """
+    Plot the hazard, samples from the hazard, and survival fn/ECDF comparison
+    """
+
+    fig, ax = plt.subplots(4, 1, sharex=True, figsize=(16, 8))
+    xmax = 30
+
+    txt = "Hazard function that we will sample from"
+    x = np.linspace(0, xmax, 1000)
+    y = hazard(x)
+    ax[0].plot(x, y)
+    ax[0].set_ylabel("hazard")
+    ax[0].set_title(txt)
+    ax[0].set_ylim(0, 1.5)
+    ax[0].set_xlim(0, xmax + 10)
+
+    # Sample failure times from the hazard function
+    sampler = HazardSampler(hazard)
+    print(f"Hazard {idx}, drawing samples for true failure times ... ")
+    failure_times = np.array([sampler.draw() for _ in range(m)])
+    print(f"Hazard {idx}, max failure time: {np.max(failure_times):.5f}")
+
+    # Apply some non-informative right censoring, just to demonstrate how it's done
+    print(f"Hazard {idx}, drawing samples for censor times ... ")
+    censor_times = np.array([sampler.draw() for _ in range(m)])
+    y = np.minimum(failure_times, censor_times)
+    # c = 1.0 * (censor_times > failure_times)
+
+    # Make some plots of the simulated data
+    # Plot a histogram of failure times from this hazard function
+    ax[1].hist(failure_times, bins=50)
+    ax[1].set_title("True Failure Times")
+    ax[1].set_xlim(0, xmax + 10)
+    ax[1].set_ylabel("count")
+
+    # Plot a histogram of censored failure times from this hazard function
+    ax[2].hist(y, bins=50)
+    ax[2].set_title("Observed Failure Times (Including Censored)")
+    ax[2].set_xlim(0, xmax + 10)
+    ax[2].set_ylabel("count")
+
+    # Plot the empirical survival function (based on the censored sample) against
+    # the actual survival function
+    t = np.arange(0, xmax, 0.1)
+    S = np.array([sampler.survival_function(t[i]) for i in range(len(t))])
+    S_hat = 1.0 - ECDF(y)(t)
+
+    ax[3].set_title("Survival Function Comparison")
+    ax[3].plot(t, S, "r", lw=3, label="True survival function")
+    ax[3].plot(t, S_hat, "b--", lw=3, label="1 - ECDF (biased due to censoring)")
+    ax[3].legend()
+    ax[3].set_xlabel("Time")
+    ax[3].set_ylabel("Proportion Still Alive")
+    ax[3].set_ylim(0, 1)
+    ax[3].set_xlim(0, xmax + 10)
+
+    plt.tight_layout()
+    fig.show()
+
+
 def set_params() -> np.array:
     """
     Set the coefficients of each variable that will be used in the simuatation of the
@@ -147,9 +208,28 @@ def individual_hazard_function(
     return base * relative_hazard
 
 
+def generate_dataset() -> np.array:
+    """
+    Simulate features for all individuals, then for each individual, draw a failure
+    time from their individual hazard function.
+    """
+
+    pass
+
+
+def sample_failure_time(X: np.ndarray) -> Tuple:
+    """
+    Use the features for an individual to create their individual hazard function,
+    then sample from that hazard function.
+
+    Returns failure time and censoring indicator
+    """
+    pass
+
+
 if __name__ == "__main__":
     # Set a random seed and sample size
-    np.random.seed(1)
+    np.random.seed(11)
     m = 100
 
     # Define hazard functions to sample from
@@ -157,7 +237,7 @@ if __name__ == "__main__":
         return np.exp(np.sin(t) - 2.0)
 
     def hazard_piecewise(t):
-        return np.where(t < 5, 1, 3)
+        return np.where(t < 3, 0.3, 1.0)
 
     hazard_person_01 = partial(
         individual_hazard_function,
@@ -170,57 +250,6 @@ if __name__ == "__main__":
     hazard_functions = [hazard_sine, hazard_piecewise, hazard_person_01]
 
     for idx, hazard in enumerate(hazard_functions):
-        fig, ax = plt.subplots(4, 1, sharex=True, figsize=(16, 8))
-        xmax = 30
-
-        txt = "Hazard function that we will sample from"
-        x = np.linspace(0, xmax, 1000)
-        y = hazard(x)
-        ax[0].plot(x, y)
-        ax[0].set_ylabel("hazard")
-        ax[0].set_title(txt)
-        ax[0].set_ylim(0, 3.5)
-        ax[0].set_xlim(0, xmax + 10)
-
-        # Sample failure times from the hazard function
-        sampler = HazardSampler(hazard)
-        print(f"Hazard {idx}, drawing samples for true failure times ... ")
-        failure_times = np.array([sampler.draw() for _ in range(m)])
-        print(f"Hazard {idx}, max failure time: {np.max(failure_times):.5f}")
-
-        # Apply some non-informative right censoring, just to demonstrate how it's done
-        print(f"Hazard {idx}, drawing samples for censor times ... ")
-        censor_times = np.array([sampler.draw() for _ in range(m)])
-        y = np.minimum(failure_times, censor_times)
-        c = 1.0 * (censor_times > failure_times)
-
-        # Make some plots of the simulated data
-        # Plot a histogram of failure times from this hazard function
-        ax[1].hist(failure_times, bins=50)
-        ax[1].set_title("True Failure Times")
-        ax[1].set_xlim(0, xmax + 10)
-
-        # Plot a histogram of censored failure times from this hazard function
-        ax[2].hist(y, bins=50)
-        ax[2].set_title("Observed Failure Times (Including Censored)")
-        ax[2].set_xlim(0, xmax + 10)
-
-        # Plot the empirical survival function (based on the censored sample) against
-        # the actual survival function
-        t = np.arange(0, xmax, 0.1)
-        S = np.array([sampler.survival_function(t[i]) for i in range(len(t))])
-        S_hat = 1.0 - ECDF(y)(t)
-
-        ax[3].set_title("Survival Function Comparison")
-        ax[3].plot(t, S, "r", lw=3, label="True survival function")
-        ax[3].plot(t, S_hat, "b--", lw=3, label="Sampled survival function (1 - ECDF)")
-        ax[3].legend()
-        ax[3].set_xlabel("Time")
-        ax[3].set_ylabel("Proportion Still Alive")
-        ax[3].set_ylim(0, 1)
-        ax[3].set_xlim(0, xmax + 10)
-
-        plt.tight_layout()
-        fig.show()
+        create_plots(idx, hazard)
 
     print("done")
