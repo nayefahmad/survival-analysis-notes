@@ -82,7 +82,7 @@ class Cdf:
 
 class InverseCdf:
     def __init__(
-        self, cdf, start, step, precision=1e-8, lower=float("-inf"), upper=float("inf")
+        self, cdf, start, step, precision=1e-2, lower=float("-inf"), upper=float("inf")
     ):
         self.cdf = cdf
         self.precision = precision
