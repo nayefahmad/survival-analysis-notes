@@ -149,7 +149,7 @@ def create_plots(idx: int, hazard: Callable) -> None:
     # Apply some non-informative right censoring, just to demonstrate how it's done
     # We use the same distribution to sample censoring times so that censoring is
     # independent from time interval. See: https://statwonk.com/weibull.html
-    print(f"Hazard {idx}, drawing samples for censor times ... ")
+    print(f"Hazard {idx}, drawing samples for censoring times ... ")
     censor_times = np.array([sampler.draw() for _ in range(m)])
     y = np.minimum(failure_times, censor_times)
     # c = 1.0 * (censor_times > failure_times)
