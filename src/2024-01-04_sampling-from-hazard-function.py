@@ -16,12 +16,14 @@ Reference: https://gist.github.com/jcrudy/10481743
 
 """
 
+from typing import Callable, Tuple
+
 from functools import partial
 import numpy as np
-import scipy.integrate
+import pandas as pd
 from matplotlib import pyplot as plt
+import scipy.integrate
 from statsmodels.distributions import ECDF
-from typing import Callable, Tuple
 
 
 class HazardSampler:
@@ -210,23 +212,62 @@ def individual_hazard_function(
     return base * relative_hazard
 
 
-def generate_dataset() -> np.array:
+def generate_dataset() -> pd.DataFrame:
     """
     Simulate features for all individuals, then for each individual, draw a failure
     time from their individual hazard function.
     """
+    params = set_params()
+    baseline_hazard = hazard_sine
+    n_samples = 100
+    n_features = params.shape[0]
 
-    pass
+    mean = np.zeros(n_features)
+    covariance = np.eye(n_features)
+    X = np.random.multivariate_normal(mean, covariance, size=n_samples)
+
+    result = []
+    for idx, row in enumerate(X):
+        observed, censoring_indicator = sample_failure_time(row, baseline_hazard)
+        df_temp = pd.DataFrame(
+            {
+                "idx": [idx],
+                "observed_time": [observed],
+                "censored": [censoring_indicator],
+            }
+        )
+        result.append(df_temp)
+
+    df_out = pd.concat(result).reset_index(drop=True)
+
+    feature_cols = pd.DataFrame(X)
+    feature_cols.columns = [f"x_{col}" for col in feature_cols.columns]
+    df_out = pd.concat([feature_cols, df_out], axis=1)
+
+    other_cols = [col for col in df_out.columns if col != "idx"]
+    df_out = df_out[["idx"] + other_cols]
+
+    return df_out
 
 
-def sample_failure_time(X: np.ndarray) -> Tuple:
+def sample_failure_time(X: np.ndarray, baseline_hazard: Callable) -> Tuple:
     """
     Use the features for an individual to create their individual hazard function,
     then sample from that hazard function.
 
     Returns failure time and censoring indicator
     """
-    pass
+    hazard = partial(
+        individual_hazard_function, baseline_hazard=baseline_hazard, X=np.array(X)
+    )
+
+    sampler = HazardSampler(hazard)
+    failure_time = sampler.draw()
+    censor_time = sampler.draw()
+    observed = np.min([failure_time, censor_time])
+    censoring_indicator = 1.0 if failure_time < censor_time else 0.0
+
+    return observed, censoring_indicator
 
 
 if __name__ == "__main__":
@@ -251,7 +292,11 @@ if __name__ == "__main__":
 
     hazard_functions = [hazard_sine, hazard_piecewise, hazard_person_01]
 
-    for idx, hazard in enumerate(hazard_functions):
-        create_plots(idx, hazard)
+    recreate_plots = False
+    if recreate_plots:
+        for idx, hazard in enumerate(hazard_functions):
+            create_plots(idx, hazard)
+
+    df = generate_dataset()
 
     print("done")
