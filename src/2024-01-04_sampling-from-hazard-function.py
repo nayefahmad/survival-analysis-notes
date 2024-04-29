@@ -12,6 +12,11 @@ To sample from the hazard function, we do the following:
 3. Use 1-S(t) to get the CDF
 4. Use inversion to get inverse CDF, and then draw random samples from the CDF.
 
+Once we set up a framework for sampling from hazard functions, we can use this to
+generate data that is known to follow the assumptions of the CoxPH model, and we can
+set the parameters of the true data generating function. Then we can test how well the
+CoxPHFitter can recover the known true parameter values.
+
 Reference: https://gist.github.com/jcrudy/10481743
 
 """
@@ -19,6 +24,9 @@ Reference: https://gist.github.com/jcrudy/10481743
 from typing import Callable, Tuple
 
 from functools import partial
+
+import lifelines
+from lifelines import CoxPHFitter
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -228,12 +236,12 @@ def generate_dataset() -> pd.DataFrame:
 
     result = []
     for idx, row in enumerate(X):
-        observed, censoring_indicator = sample_failure_time(row, baseline_hazard)
+        observed, event_indicator = sample_failure_time(row, baseline_hazard)
         df_temp = pd.DataFrame(
             {
                 "idx": [idx],
                 "observed_time": [observed],
-                "censored": [censoring_indicator],
+                "is_uncensored": [event_indicator],
             }
         )
         result.append(df_temp)
@@ -265,9 +273,19 @@ def sample_failure_time(X: np.ndarray, baseline_hazard: Callable) -> Tuple:
     failure_time = sampler.draw()
     censor_time = sampler.draw()
     observed = np.min([failure_time, censor_time])
-    censoring_indicator = 1.0 if failure_time < censor_time else 0.0
+    event_indicator = 1.0 if failure_time < censor_time else 0.0
 
-    return observed, censoring_indicator
+    return observed, event_indicator
+
+
+def extract_params(cph: lifelines.CoxPHFitter) -> pd.DataFrame:
+    """
+    Extract fitted params from CPH model, and return along with the known true values.
+    """
+    params = set_params()
+    df = pd.DataFrame({"actual_coef": params, "fitted": cph.summary["coef"]})
+    df["abs_diff"] = np.abs(df["actual_coef"] - df["fitted"])
+    return df
 
 
 if __name__ == "__main__":
@@ -298,5 +316,26 @@ if __name__ == "__main__":
             create_plots(idx, hazard)
 
     df = generate_dataset()
+
+    df = df.drop(columns=["idx"])
+
+    # Fit without regularization:
+    cph = CoxPHFitter(penalizer=0)
+    cph.fit(df, "observed_time", "is_uncensored")
+    # cph.print_summary()
+    df_params = extract_params(cph)
+    print(df_params)
+
+    # Fit with regularization:
+    penalizer_grid = [0, 0.1, 0.2, 0.5, 1.0]
+
+    for hyperparam in penalizer_grid:
+        print(f"Penalizer: {hyperparam}".ljust(99, "-"))
+        cph_02 = CoxPHFitter(penalizer=hyperparam)
+        cph_02.fit(df, "observed_time", "is_uncensored")
+        # cph_02.print_summary()
+        df_params = extract_params(cph_02)
+        print(df_params)
+        print("\n")
 
     print("done")
