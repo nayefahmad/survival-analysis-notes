@@ -46,7 +46,7 @@ class HazardSampler:
                 step = 2.0 / hazard(0.0)
             else:
                 # Reasonable default. Not efficient in some cases.
-                step = 200.0 / scipy.integrate.quad(hazard, 0.0, 100.0)
+                step = 200.0 / scipy.integrate.quad(hazard, 0.0, 100.0)[0]
         self.cumulative_hazard = CumulativeHazard(hazard)
         self.survival_function = SurvivalFunction(self.cumulative_hazard)
         self.cdf = Cdf(self.survival_function)
@@ -306,9 +306,22 @@ if __name__ == "__main__":
         X=np.array([1, 0, 0, 0, 0, 0]),
     )
 
-    # todo: add weibull hazard fn
+    def hazard_weibull(t, shape, scale=1.0):
+        buffer = 1e-4
+        return scale * shape * ((t + buffer) ** (shape - 1))
 
-    hazard_functions = [hazard_sine, hazard_piecewise, hazard_person_01]
+    hazard_weibull_exponential = partial(hazard_weibull, shape=1.0)
+    hazard_weibull_wearout = partial(hazard_weibull, shape=2.0)
+    hazard_weibull_infant_mort = partial(hazard_weibull, shape=0.5)
+
+    hazard_functions = [
+        hazard_sine,
+        hazard_piecewise,
+        hazard_person_01,
+        hazard_weibull_exponential,
+        hazard_weibull_wearout,
+        hazard_weibull_infant_mort,
+    ]
 
     recreate_plots = False
     if recreate_plots:
