@@ -26,7 +26,7 @@ from typing import Callable, Tuple
 from functools import partial
 
 import lifelines
-from lifelines import CoxPHFitter
+from lifelines import CoxPHFitter, KaplanMeierFitter
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -162,18 +162,20 @@ def create_plots(idx: int, hazard: Callable) -> None:
     print(f"Hazard {idx}, drawing samples for censoring times ... ")
     censor_times = np.array([sampler.draw() for _ in range(m)])
     y = np.minimum(failure_times, censor_times)
-    # c = 1.0 * (censor_times > failure_times)
+    c = 1.0 * (censor_times > failure_times)
 
     # Make some plots of the simulated data
     # Plot a histogram of failure times from this hazard function
     ax[1].hist(failure_times, bins=50)
-    ax[1].set_title("True Failure Times")
+    ax[1].set_title(f"True Failure Times; value_count={len(failure_times)}")
     ax[1].set_xlim(0, xmax + 10)
     ax[1].set_ylabel("count")
 
     # Plot a histogram of censored failure times from this hazard function
     ax[2].hist(y, bins=50)
-    ax[2].set_title("Observed Failure Times (Including Censored)")
+    txt = "Observed Failure Times (Including Censored)"
+    txt += f"; value_count={len(y)}"
+    ax[2].set_title(txt)
     ax[2].set_xlim(0, xmax + 10)
     ax[2].set_ylabel("count")
 
@@ -182,10 +184,15 @@ def create_plots(idx: int, hazard: Callable) -> None:
     t = np.arange(0, xmax, 0.1)
     S = np.array([sampler.survival_function(t[i]) for i in range(len(t))])
     S_hat = 1.0 - ECDF(y)(t)
+    kmf = KaplanMeierFitter(label="km")
+    kmf.fit(y, c)
+    km_x_values = kmf.survival_function_.index.to_list()
+    km_y_values = kmf.survival_function_["km"].to_list()
 
     ax[3].set_title("Survival Function Comparison")
     ax[3].plot(t, S, "r", lw=3, label="True survival function")
     ax[3].plot(t, S_hat, "b--", lw=3, label="1 - ECDF (biased due to censoring)")
+    ax[3].plot(km_x_values, km_y_values, color="grey", lw=3, label="KM estimate")
     ax[3].legend()
     ax[3].set_xlabel("Time")
     ax[3].set_ylabel("Proportion Still Alive")
@@ -323,7 +330,7 @@ if __name__ == "__main__":
         hazard_weibull_infant_mort,
     ]
 
-    recreate_plots = False
+    recreate_plots = True
     if recreate_plots:
         for idx, hazard in enumerate(hazard_functions):
             create_plots(idx, hazard)
