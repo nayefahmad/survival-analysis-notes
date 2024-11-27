@@ -101,7 +101,7 @@ for part in parts:
 # Fit a polynomial regression model with Lasso regularization to the MCF curve of each
 # part
 degree = 3  # Degree of the polynomial
-alpha = 0.01  # Regularization strength
+alpha = 0.01  # Regularization strength  # todo: use lassoCV to find optimum alpha
 
 models = {}
 
