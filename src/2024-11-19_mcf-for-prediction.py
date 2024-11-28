@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import LassoCV
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.pipeline import Pipeline
 
@@ -81,6 +81,29 @@ def compute_mcf(part_data, part_aircraft_hours_df):
     return event_times, mcf
 
 
+def fit_lasso_regression(
+    event_times: pd.Series, mcf_values: pd.Series, degree: int = 4
+):
+    """
+    Assumes we are working with a single part's data
+    """
+    X = np.array(event_times).reshape(-1, 1)
+    y = np.array(mcf_values)
+    if len(X) > 0:
+        model = Pipeline(
+            [
+                ("poly", PolynomialFeatures(degree=degree)),
+                ("scaler", StandardScaler()),
+                ("lasso", LassoCV(cv=5, max_iter=10000, random_state=2024)),
+            ]
+        )
+        # Fit the model
+        model.fit(X, y)
+    else:
+        model = None
+    return model
+
+
 # Compute and store MCF for each part
 mcf_dict = {}
 
@@ -88,49 +111,32 @@ for part in parts:
     part_data = data[data["part"] == part]
     event_times, mcf = compute_mcf(part_data, part_aircraft_hours_df)
     mcf_dict[part] = {"event_times": event_times, "mcf": mcf}
-    # Plot MCF curve for the part if there are events
-    if len(event_times) > 0:
-        plt.figure()
-        plt.step(event_times, mcf, where="post", label=f"Part {part}")
-        plt.xlabel("Cumulative Flight Hours")
-        plt.ylabel("Mean Cumulative Number of Events")
-        plt.title(f"MCF Curve for Part {part}")
-        plt.legend()
-        plt.show()
+
 
 # Fit a polynomial regression model with Lasso regularization to the MCF curve of each
 # part
-degree = 3  # Degree of the polynomial
-alpha = 0.01  # Regularization strength  # todo: use lassoCV to find optimum alpha
+degree = 2  # Degree of the polynomial
 
 models = {}
-
 for part in parts:
     mcf_data = mcf_dict[part]
-    X = np.array(mcf_data["event_times"]).reshape(-1, 1)
-    y = np.array(mcf_data["mcf"])
-    if len(X) > 0:
-        # Create a pipeline that includes polynomial features, scaling, and Lasso
-        # regression
-        model = Pipeline(
-            [
-                ("poly", PolynomialFeatures(degree=degree)),
-                ("scaler", StandardScaler()),
-                ("lasso", Lasso(alpha=alpha, max_iter=10000)),
-            ]
-        )
-        # Fit the model
-        model.fit(X, y)
-        models[part] = model
-        # Plot MCF curve and fitted polynomial
-        X_plot = np.linspace(0, max(X), 100).reshape(-1, 1)
+    model = fit_lasso_regression(
+        mcf_data["event_times"], mcf_data["mcf"], degree=degree
+    )
+    models[part] = model
+
+    if len(event_times) > 0:
+        txt = f"MCF curve and fitted lassocv polynomial for part: {part}"
+        X_plot = np.linspace(0, max(mcf_data["event_times"]) + 1000, 100).reshape(-1, 1)
         y_plot = model.predict(X_plot)
         plt.figure()
-        plt.step(X.flatten(), y, where="post", label="MCF")
+        plt.step(
+            mcf_data["event_times"], mcf_data["mcf"], where="post", label=f"Part {part}"
+        )
         plt.plot(X_plot, y_plot, label="Fitted Polynomial", color="red")
         plt.xlabel("Cumulative Flight Hours")
         plt.ylabel("Mean Cumulative Number of Events")
-        plt.title(f"MCF Curve and Fitted Polynomial for Part {part}")
+        plt.title(txt)
         plt.legend()
         plt.show()
     else:
